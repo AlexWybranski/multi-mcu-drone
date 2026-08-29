@@ -60,8 +60,6 @@ add_custom_target(clang-hicpp
         --
         -std=c++23
         -I${CMAKE_CURRENT_SOURCE_DIR}/inc
-        -I${CMAKE_CURRENT_SOURCE_DIR}/freertos/include
-        -I${CMAKE_CURRENT_SOURCE_DIR}/freertos/source/ARM_CM4F
     DEPENDS ${PROJECT_NAME}.elf
     COMMENT "Running Clang-Tidy on C++ source files only..."
 )
