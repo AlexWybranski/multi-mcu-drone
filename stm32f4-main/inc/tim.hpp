@@ -4,7 +4,7 @@
 /*
     This class is supposed to be used with TIM1 (Advanced Control Timer)
 */
-struct TIM1_Regs {
+struct TIM1_regs {
     volatile uint32_t CR1;
     volatile uint32_t CR2;
     volatile uint32_t SMCR;
@@ -27,10 +27,18 @@ struct TIM1_Regs {
     volatile uint32_t DMAR;
 };
 
-class Tim1Handler {
+class Tim1Handle {
     private:
-
+        //NOLINT used to ensure the peripheral's base address pointer remain constant
+        TIM1_regs* const m_TIM; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     public:
+        //reinterpret_cast is needed to map hardware register to code, NOLINT used
+        explicit Tim1Handle(uint32_t baseAddr) : m_TIM(reinterpret_cast<TIM1_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        ~Tim1Handle() = default;
+        Tim1Handle(const Tim1Handle& other) = delete;
+        Tim1Handle& operator=(const Tim1Handle& other) = delete;
+        Tim1Handle(Tim1Handle&& other) = delete;
+        Tim1Handle& operator=(Tim1Handle&& other) = delete;
 };
 
 #endif

@@ -25,6 +25,21 @@ class SpiHandle {
         SpiHandle& operator=(const SpiHandle& other) = delete;
         SpiHandle(SpiHandle&& other) = delete;
         SpiHandle& operator=(SpiHandle&& other) = delete;
+
+        /*
+            SPI is being initialized to work on:
+                - Full duplex
+                - No CRC
+                - 8-bit data frame format
+                - Software CS management
+                - 6 MHz
+                - Master mode
+                - Mode 3 (CPOL = 1 and CPHA = 1) - Needed by LSM6DS3TR-C IMU Sensor
+
+                - TX interrupts
+                - RX interrupts
+        */
+        void init();
 };
 
 #endif
