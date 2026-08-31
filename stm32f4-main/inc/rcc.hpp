@@ -70,11 +70,18 @@ class RccHandle {
         RccHandle(RccHandle&& other) = delete;
         RccHandle& operator=(RccHandle&& other) = delete;
 
-        /*
-        IRRELEVANT - This functions are supposed to be executed in [blank] phase before RccHandle object will be created
-        */
         constexpr static uint32_t calculatePllCfgrValue();
-        static void setClock(uint32_t rccBaseAddr);
+
+        /*
+            This function is supposed to be executed before any other to ensure proper frequency for all peripherals
+        */
+        void setClock();
+
+        void enableAHB1PeripheralClock(uint32_t peripheralBit);
+
+        void enableAPB1PeripheralClock(uint32_t peripheralBit);
+
+        void enableTim1Clock();
 };
 
 #endif

@@ -11,13 +11,13 @@ constexpr uint32_t RccHandle::calculatePllCfgrValue() {
     //Reset value for RCC_PLLCFGR register
     const uint32_t resetVal = 0x24003010U;
 
-    const uint32_t HSE_SRC_RESET = 1U;
+    const uint32_t PLL_SRC_RESET = 1U;
     const uint32_t M_VAL_RESET = 63U;
     const uint32_t N_VAL_RESET = 511U;
     const uint32_t P_VAL_RESET = 0b11U;
     const uint32_t Q_VAL_RESET = 15U;
 
-    const uint32_t HSE_SRC = 1U;
+    const uint32_t PLL_SRC = 1U; //HSE will be source for PLL
     /*
         HSE base frequency is 25MHz
         PLL VCO Clock = Clock input * (N / M) or Clock input / M * N
@@ -31,17 +31,16 @@ constexpr uint32_t RccHandle::calculatePllCfgrValue() {
 
     uint32_t val = resetVal;
 
-    val &= ~((HSE_SRC_RESET << PLLSRC_SHIFT) | (M_VAL_RESET << PLLM_SHIFT) | (N_VAL_RESET << PLLN_SHIFT) | (P_VAL_RESET << PLLP_SHIFT) | (Q_VAL_RESET << PLLQ_SHIFT));
-    val |= ((HSE_SRC << PLLSRC_SHIFT) | (M_VAL << PLLM_SHIFT) | (N_VAL << PLLN_SHIFT) | (P_VAL << PLLP_SHIFT) | (Q_VAL << PLLQ_SHIFT));
+    val &= ~((PLL_SRC_RESET << PLLSRC_SHIFT) | (M_VAL_RESET << PLLM_SHIFT) | (N_VAL_RESET << PLLN_SHIFT) | (P_VAL_RESET << PLLP_SHIFT) | (Q_VAL_RESET << PLLQ_SHIFT));
+    val |= ((PLL_SRC << PLLSRC_SHIFT) | (M_VAL << PLLM_SHIFT) | (N_VAL << PLLN_SHIFT) | (P_VAL << PLLP_SHIFT) | (Q_VAL << PLLQ_SHIFT));
 
     return val;
 } 
 
-void RccHandle::setClock(uint32_t rccBaseAddr) {
+void RccHandle::setClock() {
     constexpr uint32_t FLASH_BASEADDR = 0x40023C00;
-    constexpr uint32_t FLASH_ACR_LATENCY_VAL = 0b0001U;
-    constexpr uint32_t FLASH_ACR_LATENCY_RESET_VAL = 0b1111U;
-    constexpr uint32_t FLASH_ACR_LATENCY_SHIFT = 0;
+    constexpr uint32_t FLASH_ACR_LATENCY_SET = (0b0001U << 0);
+    constexpr uint32_t FLASH_ACR_LATENCY_RESET = ~(0b1111U << 0);
 
     constexpr uint32_t CFGR_SW_RESET_VAL = 0b11U;
     constexpr uint32_t CFGR_SW_VAL = 0b10U;
@@ -63,30 +62,44 @@ void RccHandle::setClock(uint32_t rccBaseAddr) {
     constexpr uint32_t PLLON_SHIFT = 24U;
     constexpr uint32_t PLLRDY_SHIFT = 25U;
 
-
-    auto* const l_RCC = reinterpret_cast<RCC_regs*>(rccBaseAddr); //NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-
     /*
         FLASH_ACR register which is needed is first register in flash peripheral -> no struct needed, writing straight to base address
     */
     auto* const l_FLASH = reinterpret_cast<volatile uint32_t*>(FLASH_BASEADDR); //NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     
-    l_RCC->CFGR &= ~(CFGR_PPRE1_RESET_VAL << CFGR_PPRE1_SHIFT);
-    l_RCC->CFGR &= ~(CFGR_PPRE2_RESET_VAL << CFGR_PPRE2_SHIFT);
+    m_RCC->CFGR &= ~(CFGR_PPRE1_RESET_VAL << CFGR_PPRE1_SHIFT);
+    m_RCC->CFGR &= ~(CFGR_PPRE2_RESET_VAL << CFGR_PPRE2_SHIFT);
+    m_RCC->PLLCFGR = calculatePllCfgrValue();
 
-    l_RCC->PLLCFGR = calculatePllCfgrValue();
+    *l_FLASH &= FLASH_ACR_LATENCY_RESET;
+    *l_FLASH |= FLASH_ACR_LATENCY_SET;
 
-    *l_FLASH &= ~(FLASH_ACR_LATENCY_RESET_VAL << FLASH_ACR_LATENCY_SHIFT);
-    *l_FLASH |= (FLASH_ACR_LATENCY_VAL << FLASH_ACR_LATENCY_SHIFT);
+    m_RCC->CR |= (HSEON_VAL << HSEON_SHIFT);
+    while ((m_RCC->CR & (HSERDY_VAL << HSERDY_SHIFT)) == 0) {}
 
-    l_RCC->CR |= (HSEON_VAL << HSEON_SHIFT);
-    while ((l_RCC->CR & (HSERDY_VAL << HSERDY_SHIFT)) == 0) {}
+    m_RCC->CR |= (PLLON_VAL << PLLON_SHIFT);
+    while ((m_RCC->CR & (PLLRDY_VAL << PLLRDY_SHIFT)) == 0) {}
 
-    l_RCC->CR |= (PLLON_VAL << PLLON_SHIFT);
-    while ((l_RCC->CR & (PLLRDY_VAL << PLLRDY_SHIFT)) == 0) {}
+    m_RCC->CFGR &= ~(CFGR_SW_RESET_VAL << CFGR_SW_SHIFT);
+    m_RCC->CFGR |= (CFGR_SW_VAL << CFGR_SW_SHIFT);
 
-    l_RCC->CFGR &= ~(CFGR_SW_RESET_VAL << CFGR_SW_SHIFT);
-    l_RCC->CFGR |= (CFGR_SW_VAL << CFGR_SW_SHIFT);
+    while ((m_RCC->CFGR & (CFGR_SWS_DESIRED_VAL << CFGR_SWS_SHIFT)) == 0) {}
+}
 
-    while ((l_RCC->CFGR & (CFGR_SWS_DESIRED_VAL << CFGR_SWS_SHIFT)) == 0) {}
+void RccHandle::enableAHB1PeripheralClock(uint32_t peripheralBit) {
+    uint32_t PERIPHERAL_EN = (0b1U << peripheralBit);
+
+    m_RCC->AHB1ENR |= PERIPHERAL_EN;
+}
+
+void RccHandle::enableAPB1PeripheralClock(uint32_t peripheralBit) {
+    uint32_t PERIPHERAL_EN = (0b1U << peripheralBit);
+
+    m_RCC->APB1ENR |= PERIPHERAL_EN;
+}
+
+void RccHandle::enableTim1Clock() {
+    constexpr uint32_t TIM1_EN = (0b1U << 0);
+
+    m_RCC->APB2ENR |= TIM1_EN;
 }
