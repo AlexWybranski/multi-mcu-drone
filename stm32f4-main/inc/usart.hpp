@@ -24,6 +24,8 @@ class UsartHandle {
         UsartHandle& operator=(const UsartHandle& other) = delete;
         UsartHandle(UsartHandle&& other) = delete;
         UsartHandle& operator=(UsartHandle&& other) = delete;
+
+        constexpr uint32_t calculateBRRregValue();
 };
 
 #endif

@@ -41,6 +41,7 @@ target_include_directories(${PROJECT_NAME}.elf PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/freertos/include
     ${CMAKE_CURRENT_SOURCE_DIR}/freertos/source/ARM_CM4F
+    ../$(CMAKE_CURRENT_SOURCE_DIR)/shared/packet.hpp
 )
 
 add_custom_target(load
