@@ -3,11 +3,11 @@
 #include <cstdint>
 
 namespace Buttons {
-    constexpr uint8_t LB = 0;
-    constexpr uint8_t RB = 1U;
-    constexpr uint8_t UP = 2U;
-    constexpr uint8_t DOWN = 3U;
-    constexpr uint8_t CROSS = 4U;
+    constexpr uint8_t YAW_LEFT = 0;
+    constexpr uint8_t YAW_RIGHT = 1U;
+    constexpr uint8_t CAM_UP = 2U;
+    constexpr uint8_t CAM_DOWN = 3U;
+    constexpr uint8_t START_STOP_ENGINE = 4U;
     constexpr uint8_t Res0 = 5U;
     constexpr uint8_t Res1 = 6U;
     constexpr uint8_t NO_PAD = 7U;
