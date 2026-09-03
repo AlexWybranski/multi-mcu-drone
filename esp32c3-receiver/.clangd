@@ -1,0 +1,13 @@
+CompileFlags:
+  Add: [
+    -Wno-unknown-pragmas, 
+    -Wno-unused-variable, 
+    "-D__GLIBC_USE(x)=0"
+  ]
+  
+  Remove: [
+    -mlongcalls,
+    -fstrict-volatile-bitfields,
+    -fno-tree-switch-conversion,
+    -fno-shrink-wrap
+  ]

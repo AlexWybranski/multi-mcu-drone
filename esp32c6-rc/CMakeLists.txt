@@ -12,4 +12,4 @@ include_directories("../shared")
 set(EXTRA_COMPONENT_DIRS ${BLUEPAD32_ROOT}/src/components)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(bluepad32_esp32_example_app)
+project(remotecontrol_app)

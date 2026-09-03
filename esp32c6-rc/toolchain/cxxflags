@@ -1,0 +1,5 @@
+    -fno-exceptions 
+    -fno-rtti 
+    -O2
+    -ffunction-sections 
+    -fdata-sections

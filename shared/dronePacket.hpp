@@ -14,12 +14,12 @@ namespace Buttons {
 }
 
 struct __attribute__((packed)) DroneControlPacket {
-    uint8_t throttle;
-    uint8_t roll;
-    uint8_t pitch;
-    uint8_t buttonControlReg;
+    uint8_t throttle{128};
+    uint8_t roll{128};
+    uint8_t pitch{128};
+    uint8_t buttonControlReg{0};
 
-    uint32_t crcValue;
+    uint32_t crcValue{0xFFFFFFFF};
 };
 
 #endif
