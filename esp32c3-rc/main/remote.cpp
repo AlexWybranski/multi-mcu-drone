@@ -1,35 +1,122 @@
 #include "remote.hpp"
 #include "bridge.h"
 
-void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons) {
-    using namespace ButtonMasks;
+extern "C" {
+    #include "esp_wifi.h"
+    #include "esp_now.h"
+    #include "esp_rom_crc.h"
+}
 
-    DroneControlPacket dronePacket{0,0,0,0,0};
+int32_t RemoteControl::applyDeadzone(int32_t axis) {
+    using namespace ConstantValues;
+    if (axis < DEAD_ZONE && axis > -DEAD_ZONE) {
+        return 0; 
+    } else {
+        return axis;
+    }   
+}
+
+
+void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad) {
+    using namespace ButtonMasks;
 
     int32_t ay = applyDeadzone(axis_y);
     int32_t arx = applyDeadzone(axis_rx);
     int32_t ary = applyDeadzone(axis_ry);
 
-    dronePacket.throttle = scaleAxisValue(ay);
-    dronePacket.roll = scaleAxisValue(arx);
-    dronePacket.pitch = scaleAxisValue(ary);
+    m_currentPacket.throttle = scaleAxisValue(ay);
+    m_currentPacket.roll = scaleAxisValue(arx);
+    m_currentPacket.pitch = scaleAxisValue(ary);
         
     if (buttons & BUTTON_SHOULDER_L) {
-        dronePacket.buttonControlReg |= (0b1U << Buttons::YAW_LEFT);
+        m_currentPacket.buttonControlReg |= (0b1U << Buttons::YAW_LEFT);
     }
 
     if (buttons & BUTTON_SHOULDER_R) {
-        dronePacket.buttonControlReg |= (0b1U << Buttons::YAW_RIGHT);
+        m_currentPacket.buttonControlReg |= (0b1U << Buttons::YAW_RIGHT);
     }
 
     if (buttons & BUTTON_A) {
-        dronePacket.buttonControlReg |= (0b1U << Buttons::START_STOP_ENGINE);
+        m_currentPacket.buttonControlReg |= (0b1U << Buttons::START_STOP_ENGINE);
     }
 
-    calculateCRC(&dronePacket);
-    sendPacket(dronePacket);
-} 
+    if(dpad & DPAD_UP) {
+        m_currentPacket.buttonControlReg |= (0b1U << Buttons::CAM_UP);
+    }
 
-void call_remote_control(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons) {
-    RemoteControl::handlePadData(axis_y, axis_rx, axis_ry, buttons);
+    if(dpad & DPAD_DOWN) {
+        m_currentPacket.buttonControlReg |= (0b1U << Buttons::CAM_DOWN);
+    }
+
+    {
+        std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
+        m_sharedPacket = m_currentPacket;
+    }
+    m_currentPacket.buttonControlReg = ConstantValues::N_BUTTON_REG;
+}
+
+void RemoteControl::calculateCRC(DroneControlPacket* dronePacket) {
+    using namespace ConstantValues;
+
+    std::array<uint8_t, PACKET_DATA_SIZE> buffer;
+
+    std::memcpy(buffer.data(), dronePacket, PACKET_DATA_SIZE);
+
+    dronePacket->crcValue = esp_rom_crc32_le(N_CRC_CALC_VALUE, buffer.data(), PACKET_DATA_SIZE);
+}
+
+DroneControlPacket RemoteControl::getAndClearPacket() {
+    DroneControlPacket packet;
+
+    {
+        using namespace ConstantValues;
+        std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
+        packet = m_sharedPacket;
+        m_sharedPacket.buttonControlReg = N_BUTTON_REG;
+        m_sharedPacket.crcValue = 0;
+    }
+
+    return packet;
+}
+
+void RemoteControl::sendPacket(DroneControlPacket *packet) {
+    using namespace ConstantValues;
+
+    std::array<uint8_t, PACKET_SIZE> buffer;
+
+    RemoteControl::calculateCRC(packet);
+        
+    std::memcpy(buffer.data(), packet, PACKET_SIZE);
+
+    esp_now_send(RemoteControl::m_peer.peer_addr, buffer.data(), PACKET_SIZE);
+}
+
+void RemoteControl::initRemoteConnection() {
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    ESP_ERROR_CHECK(esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE));
+
+    ESP_ERROR_CHECK(esp_now_init());
+
+    std::memcpy(m_peer.peer_addr, ConstantValues::RECEIVER_MAC.data(), ConstantValues::MAC_LENGTH);
+    m_peer.channel = 1;
+    m_peer.encrypt = false;
+
+    ESP_ERROR_CHECK(esp_now_add_peer(&RemoteControl::m_peer));
+}
+
+void call_remote_control(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad) {
+    RemoteControl::handlePadData(axis_y, axis_rx, axis_ry, buttons, dpad);
 }

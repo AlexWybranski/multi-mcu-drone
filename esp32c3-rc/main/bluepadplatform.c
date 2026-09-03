@@ -51,7 +51,6 @@ static uni_error_t platform_on_device_discovered(bd_addr_t addr, const char* nam
 
     // As an example, if you want to filter out keyboards, do:
     if (((cod & UNI_BT_COD_MINOR_MASK) & UNI_BT_COD_MINOR_KEYBOARD) == UNI_BT_COD_MINOR_KEYBOARD) {
-        logi("Ignoring keyboard\n");
         return UNI_ERROR_IGNORE_DEVICE;
     }
 
@@ -78,15 +77,10 @@ static uni_error_t platform_on_device_ready(uni_hid_device_t* d) {
 static void platform_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
     uni_gamepad_t* gp;
 
-    switch (ctl->klass) {
-        case UNI_CONTROLLER_CLASS_GAMEPAD:
-            gp = &ctl->gamepad;
-
-            call_remote_control(gp->axis_y, gp->axis_rx, gp->axis_ry, gp->buttons);
-
-            break;
-        default:
-            break;
+    if(ctl->klass == UNI_CONTROLLER_CLASS_GAMEPAD) {
+        gp = &ctl->gamepad;
+    
+        call_remote_control(gp->axis_y, gp->axis_rx, gp->axis_ry, gp->buttons, gp->dpad);
     }
 }
 

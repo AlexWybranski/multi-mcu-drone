@@ -1,6 +1,12 @@
 // Example file - Public Domain
 // Need help? http://bit.ly/bluepad32-help
 
+#include <cstdio>
+
+
+#include "dronePacket.hpp"
+#include "remote.hpp"
+
 extern "C" {
     #include <stdlib.h>
     
@@ -10,15 +16,27 @@ extern "C" {
     #include <hci_dump.h>
     #include <hci_dump_embedded_stdout.h>
     #include <uni.h>
-    
+
+    #include "nvs_flash.h"
+
     #include "sdkconfig.h"
 
-    int app_main(void);
+    #include <freertos/FreeRTOS.h>
+    #include <freertos/task.h>
 
+    int app_main(void);
 
     struct uni_platform* get_my_platform(void);
 }
 
+constexpr size_t ESP_NOW_TASK_STACK_SIZE = 2048;
+constexpr uint32_t ESP_NOW_TASK_DELAY_MS = 20;
+
+StackType_t txEspNowTask[ESP_NOW_TASK_STACK_SIZE*4];
+StaticTask_t txEspNowTaskBuffer;
+TaskHandle_t txEspNowTaskHandle;
+
+void txEspNowTaskFunc(void* pvParameters);
 
 // Sanity check
 static_assert(
@@ -31,15 +49,28 @@ static_assert(
 );
 
 int app_main(void) {
-    // If you enable HCI Dump better to disable "Bluepad32 USB Console" from "idf.py menuconfig".
-    // hci_dump_init(hci_dump_embedded_stdout_get_instance());
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
 
-    // Don't use BTstack buffered UART. It conflicts with the console.
-    // #ifdef CONFIG_ESP_CONSOLE_UART
-    // #ifndef CONFIG_BLUEPAD32_USB_CONSOLE_ENABLE
-    //     btstack_stdio_init();
-    // #endif  // CONFIG_BLUEPAD32_USB_CONSOLE_ENABLE
-    // #endif  // CONFIG_ESP_CONSOLE_UART
+    RemoteControl::initRemoteConnection();
+
+    RemoteControl::initNeutralCRC();
+
+    txEspNowTaskHandle = xTaskCreateStaticPinnedToCore
+    (
+        txEspNowTaskFunc,
+        "tx_esp_now_task",
+        ESP_NOW_TASK_STACK_SIZE,
+        nullptr,
+        5,
+        txEspNowTask,
+        &txEspNowTaskBuffer,
+        tskNO_AFFINITY
+    );
 
     // Configure BTstack for ESP32 VHCI Controller
     btstack_init();
@@ -54,4 +85,23 @@ int app_main(void) {
     btstack_run_loop_execute();
 
     return 0;
+}
+
+void txEspNowTaskFunc(void* pvParameters) {
+    static_cast<void>(pvParameters);
+
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = pdMS_TO_TICKS(ESP_NOW_TASK_DELAY_MS);
+
+    xLastWakeTime = xTaskGetTickCount();
+
+    while(1) {
+        DroneControlPacket packet = RemoteControl::getAndClearPacket();
+
+        RemoteControl::sendPacket(&packet);
+
+        esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %u, Roll: %u, Buttons: %u, CRC: %X\n", packet.throttle, packet.pitch, packet.roll, packet.buttonControlReg, packet.crcValue);
+
+        xTaskDelayUntil(&xLastWakeTime, xFrequency);
+    }
 }
