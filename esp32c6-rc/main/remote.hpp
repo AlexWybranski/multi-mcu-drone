@@ -29,7 +29,9 @@ namespace ConstantValues {
 
     constexpr std::array<uint8_t, PACKET_DATA_SIZE> NEUTRAL_DATA{N_THROTTLE, N_ROLL, N_PITCH, N_BUTTON_REG};
 
-    constexpr uint32_t N_CRC_CALC_VALUE = 0U;
+    constexpr uint32_t N_CRC_CALC_VALUE = 0xFFFFFFFFU;
+
+    constexpr uint8_t RST_BUTTONS = ~(ControlRegister::CAM_DOWN | ControlRegister::CAM_UP | ControlRegister::YAW_LEFT | ControlRegister::YAW_RIGHT | ControlRegister::START_STOP_ENGINE);
 };
 
 namespace ButtonMasks {
@@ -62,28 +64,34 @@ class RemoteControl {
         
         static inline esp_now_peer_info_t m_peer;
 
+        static inline bool m_isPadReady{false};
+
         public:
         RemoteControl() = delete;
-
-        static void handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad);
 
         static DroneControlPacket getAndClearPacket();
         
         static void calculateCRC(DroneControlPacket* dronePacket);
         
         static void sendPacket(DroneControlPacket *packet);        
-
+        
         /*
-            Use this function only once
+        Use this function only once
         */
         static inline void initNeutralCRC() {
             N_PACKET_CRC = esp_rom_crc32_le(ConstantValues::N_CRC_CALC_VALUE, ConstantValues::NEUTRAL_DATA.data(), ConstantValues::PACKET_DATA_SIZE);
         }
-
+        
         /*
-            This function initiates both wifi and esp_now protocol
+        This function initiates both wifi and esp_now protocol
         */
         static void initRemoteConnection();
+
+        static void handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad);
+
+        static void padDisconnected();
+
+        static void padReady();
 };
 
 #endif

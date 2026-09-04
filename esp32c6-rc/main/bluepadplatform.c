@@ -62,7 +62,7 @@ static void platform_on_device_connected(uni_hid_device_t* d) {
 }
 
 static void platform_on_device_disconnected(uni_hid_device_t* d) {
-    logi("%s: device disconnected: %p\n", platform_name, d);
+    call_pad_disconnected();
 }
 
 static uni_error_t platform_on_device_ready(uni_hid_device_t* d) {
@@ -71,6 +71,9 @@ static uni_error_t platform_on_device_ready(uni_hid_device_t* d) {
     ins->gamepad_seat = GAMEPAD_SEAT_A;
 
     trigger_event_on_gamepad(d);
+
+    call_pad_ready();
+    
     return UNI_ERROR_SUCCESS;
 }
 

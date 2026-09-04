@@ -1,6 +1,6 @@
 set(srcs "main.cpp" "receiver.cpp")
 
-set(requires "esp_wifi" "esp_netif" "nvs_flash" "esp_event")
+set(requires "esp_wifi" "esp_netif" "nvs_flash" "esp_event" "esp_driver_uart")
 
 idf_component_register(SRCS "${srcs}"
                     PRIV_REQUIRES "${requires}"

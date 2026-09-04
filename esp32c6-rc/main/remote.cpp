@@ -16,45 +16,6 @@ int32_t RemoteControl::applyDeadzone(int32_t axis) {
     }   
 }
 
-
-void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad) {
-    using namespace ButtonMasks;
-
-    int32_t ay = applyDeadzone(axis_y);
-    int32_t arx = applyDeadzone(axis_rx);
-    int32_t ary = applyDeadzone(axis_ry);
-
-    m_currentPacket.throttle = scaleAxisValue(ay);
-    m_currentPacket.roll = scaleAxisValue(arx);
-    m_currentPacket.pitch = scaleAxisValue(ary);
-        
-    if (buttons & BUTTON_SHOULDER_L) {
-        m_currentPacket.buttonControlReg |= (0b1U << Buttons::YAW_LEFT);
-    }
-
-    if (buttons & BUTTON_SHOULDER_R) {
-        m_currentPacket.buttonControlReg |= (0b1U << Buttons::YAW_RIGHT);
-    }
-
-    if (buttons & BUTTON_A) {
-        m_currentPacket.buttonControlReg |= (0b1U << Buttons::START_STOP_ENGINE);
-    }
-
-    if(dpad & DPAD_UP) {
-        m_currentPacket.buttonControlReg |= (0b1U << Buttons::CAM_UP);
-    }
-
-    if(dpad & DPAD_DOWN) {
-        m_currentPacket.buttonControlReg |= (0b1U << Buttons::CAM_DOWN);
-    }
-
-    {
-        std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
-        m_sharedPacket = m_currentPacket;
-    }
-    m_currentPacket.buttonControlReg = ConstantValues::N_BUTTON_REG;
-}
-
 void RemoteControl::calculateCRC(DroneControlPacket* dronePacket) {
     using namespace ConstantValues;
 
@@ -88,7 +49,10 @@ void RemoteControl::sendPacket(DroneControlPacket *packet) {
         
     std::memcpy(buffer.data(), packet, PACKET_SIZE);
 
-    esp_now_send(RemoteControl::m_peer.peer_addr, buffer.data(), PACKET_SIZE);
+    if(m_isPadReady) {
+        esp_now_send(RemoteControl::m_peer.peer_addr, buffer.data(), PACKET_SIZE);
+    }
+
 }
 
 void RemoteControl::initRemoteConnection() {
@@ -119,6 +83,78 @@ void RemoteControl::initRemoteConnection() {
     ESP_ERROR_CHECK(esp_now_add_peer(&RemoteControl::m_peer));
 }
 
+/*
+    Functions triggered by bluepad callbacks
+*/
+void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad) {
+    using namespace ButtonMasks;
+
+    int32_t ay = applyDeadzone(axis_y);
+    int32_t arx = applyDeadzone(axis_rx);
+    int32_t ary = applyDeadzone(axis_ry);
+
+    m_currentPacket.throttle = scaleAxisValue(ay);
+    m_currentPacket.roll = scaleAxisValue(arx);
+    m_currentPacket.pitch = scaleAxisValue(ary);
+        
+    if (buttons & BUTTON_SHOULDER_L) {
+        m_currentPacket.buttonControlReg |= ControlRegister::YAW_LEFT;
+    }
+
+    if (buttons & BUTTON_SHOULDER_R) {
+        m_currentPacket.buttonControlReg |= ControlRegister::YAW_RIGHT;
+    }
+
+    if (buttons & BUTTON_A) {
+        m_currentPacket.buttonControlReg |= ControlRegister::START_STOP_ENGINE;
+    }
+
+    if(dpad & DPAD_UP) {
+        m_currentPacket.buttonControlReg |= ControlRegister::CAM_UP;
+    }
+
+    if(dpad & DPAD_DOWN) {
+        m_currentPacket.buttonControlReg |= ControlRegister::CAM_DOWN;
+    }
+
+    {
+        std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
+        m_sharedPacket = m_currentPacket;
+    }
+
+    {
+        m_currentPacket.buttonControlReg &= ConstantValues::RST_BUTTONS;
+    }
+}
+
+void RemoteControl::padDisconnected() {
+    constexpr uint32_t DELAY_TILL_DISCONNECT = 40U;
+    {
+        std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
+        m_sharedPacket.buttonControlReg |= ControlRegister::NO_PAD;
+    }
+    vTaskDelay(pdMS_TO_TICKS(DELAY_TILL_DISCONNECT));
+    m_isPadReady = false;
+}
+
+void RemoteControl::padReady() {
+    m_isPadReady = true;
+
+    //clear in case of reconnect
+    m_sharedPacket.buttonControlReg &= ~ControlRegister::NO_PAD;
+}
+
+/*
+    callbacks for bluepad
+*/
 void call_remote_control(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad) {
     RemoteControl::handlePadData(axis_y, axis_rx, axis_ry, buttons, dpad);
+}
+
+void call_pad_disconnected() {
+    RemoteControl::padDisconnected();
+}
+
+void call_pad_ready() {
+    RemoteControl::padReady();
 }

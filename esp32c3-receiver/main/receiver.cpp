@@ -37,12 +37,32 @@ void Receiver::onReceive(const esp_now_recv_info_t* info, const uint8_t* data, i
         
         Receiver::m_packet = receivedPacket;
 
+        int wyslane = uart_write_bytes(m_uart_num, data, static_cast<size_t>(data_len));
+
+        esp_rom_printf("UART wyslal bajtow: %d\n", wyslane);
+
         esp_rom_printf("[RCV] Throttle: %u | Pitch: %u | Roll: %u | Buttons: %u | CRC: %X\n", Receiver::m_packet.throttle, Receiver::m_packet.pitch, Receiver::m_packet.roll, Receiver::m_packet.buttonControlReg, Receiver::m_packet.crcValue);
     } else {
         //DROP PACKET
     }
 }
 
-void Receiver::uartStream() {
+void Receiver::initUart() {
+    constexpr int uart_buffer_tx_size = 256;
+    constexpr int uart_buffer_rx_size = 256;
+    constexpr int UART_BAUD_RATE = 115200;
+    
+    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_1, uart_buffer_rx_size, uart_buffer_tx_size, 0, nullptr, 0));
 
+    uart_config_t uart_config = {};
+    uart_config.baud_rate = UART_BAUD_RATE;
+    uart_config.data_bits = UART_DATA_8_BITS;
+    uart_config.parity = UART_PARITY_DISABLE;
+    uart_config.stop_bits = UART_STOP_BITS_1;
+    uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    uart_config.rx_flow_ctrl_thresh = 0;
+
+    ESP_ERROR_CHECK(uart_param_config(m_uart_num, &uart_config));
+
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, 17, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 }
