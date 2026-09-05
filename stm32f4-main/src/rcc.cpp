@@ -1,6 +1,32 @@
 #include "rcc.hpp"
 #include <cstdint>
 
+namespace RCC_SETUP {
+    constexpr uint32_t FLASH_BASEADDR = 0x40023C00;
+    constexpr uint32_t FLASH_ACR_LATENCY_SET = (0b0001U << 0U);
+    constexpr uint32_t FLASH_ACR_LATENCY_RESET = ~(0b1111U << 0U);
+
+    constexpr uint32_t CFGR_SW_RESET_VAL = 0b11U;
+    constexpr uint32_t CFGR_SW_VAL = 0b10U;
+    constexpr uint32_t CFGR_SW_SHIFT = 0U;
+    constexpr uint32_t CFGR_SWS_DESIRED_VAL = 0b10U;
+    constexpr uint32_t CFGR_SWS_SHIFT = 2U;
+    constexpr uint32_t CFGR_PPRE1_RESET_VAL = 0b111U;
+    constexpr uint32_t CFGR_PPRE1_SHIFT = 10U;
+    constexpr uint32_t CFGR_PPRE2_RESET_VAL = 0b111U;
+    constexpr uint32_t CFGR_PPRE2_SHIFT = 13U;
+
+    constexpr uint32_t HSEON_VAL = 0b1U;
+    constexpr uint32_t HSERDY_VAL = 0b1U;
+    constexpr uint32_t HSEON_SHIFT = 16U;
+    constexpr uint32_t HSERDY_SHIFT = 17U;
+
+    constexpr uint32_t PLLON_VAL = 0b1U;  
+    constexpr uint32_t PLLRDY_VAL = 0b1U;  
+    constexpr uint32_t PLLON_SHIFT = 24U;
+    constexpr uint32_t PLLRDY_SHIFT = 25U;
+}
+
 constexpr uint32_t RccHandle::calculatePllCfgrValue() {
     const uint32_t PLLSRC_SHIFT = 22U;
     const uint32_t PLLM_SHIFT = 0;
@@ -38,30 +64,7 @@ constexpr uint32_t RccHandle::calculatePllCfgrValue() {
 } 
 
 void RccHandle::setClock() {
-    constexpr uint32_t FLASH_BASEADDR = 0x40023C00;
-    constexpr uint32_t FLASH_ACR_LATENCY_SET = (0b0001U << 0);
-    constexpr uint32_t FLASH_ACR_LATENCY_RESET = ~(0b1111U << 0);
-
-    constexpr uint32_t CFGR_SW_RESET_VAL = 0b11U;
-    constexpr uint32_t CFGR_SW_VAL = 0b10U;
-    constexpr uint32_t CFGR_SW_SHIFT = 0;
-    constexpr uint32_t CFGR_SWS_DESIRED_VAL = 0b10U;
-    constexpr uint32_t CFGR_SWS_SHIFT = 2U;
-    constexpr uint32_t CFGR_PPRE1_RESET_VAL = 0b111U;
-    constexpr uint32_t CFGR_PPRE1_SHIFT = 10U;
-    constexpr uint32_t CFGR_PPRE2_RESET_VAL = 0b111U;
-    constexpr uint32_t CFGR_PPRE2_SHIFT = 13U;
-
-    constexpr uint32_t HSEON_VAL = 0b1U;
-    constexpr uint32_t HSERDY_VAL = 0b1U;
-    constexpr uint32_t HSEON_SHIFT = 16U;
-    constexpr uint32_t HSERDY_SHIFT = 17U;
-
-    constexpr uint32_t PLLON_VAL = 0b1U;  
-    constexpr uint32_t PLLRDY_VAL = 0b1U;  
-    constexpr uint32_t PLLON_SHIFT = 24U;
-    constexpr uint32_t PLLRDY_SHIFT = 25U;
-
+    using namespace RCC_SETUP;
     /*
         FLASH_ACR register which is needed is first register in flash peripheral -> no struct needed, writing straight to base address
     */
@@ -99,7 +102,7 @@ void RccHandle::enableAPB1PeripheralClock(uint32_t peripheralBit) {
 }
 
 void RccHandle::enableTim1Clock() {
-    constexpr uint32_t TIM1_EN = (0b1U << 0);
+    constexpr uint32_t TIM1_EN = (0b1U << 0U);
 
     m_RCC->APB2ENR |= TIM1_EN;
 }

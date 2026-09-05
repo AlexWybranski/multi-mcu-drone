@@ -1,6 +1,33 @@
 #ifndef DMA_HPP
 #define DMA_HPP
 #include <cstdint>
+#include <array>
+
+namespace DMA_SETUP {
+    //SxCR
+    constexpr uint32_t CHANNEL_RESET = ~(0b111U << 25U);
+    constexpr uint32_t CHANNEL4_SET = (0b100U << 25U);
+
+    constexpr uint32_t DOUBLE_BUFFER_MODE = (0b1U << 19U);
+
+    constexpr uint32_t MSIZE_ONE_BYTE = ~(0b11U << 13U);
+    constexpr uint32_t PSIZE_ONE_BYTE = ~(0b11U << 11U);
+
+    constexpr uint32_t MINC_ON = (0b1U << 10U);
+    constexpr uint32_t PINC_OFF = ~(0b1U << 9U);
+
+    constexpr uint32_t PER_TO_MEM_DIRECTION = ~(0b11U << 6U);
+
+    constexpr uint32_t TCIE = (0b1U << 4U);
+
+    constexpr uint32_t ENABLE = (0b1U << 0U);
+
+    //value for SxNDTR register (what is length of one transfer (according to MSIZE value))
+    constexpr uint32_t NDTR_VAL = 8U;
+
+    //HIFCR
+    constexpr uint32_t CLEAR_TCF = (0b1U << 11U); //CTCIFx bit
+}
 
 struct DMA_regs {
     volatile uint32_t LISR;
@@ -69,6 +96,18 @@ class DmaHandle {
         DmaHandle& operator=(const DmaHandle& other) = delete;
         DmaHandle(DmaHandle&& other) = delete;
         DmaHandle& operator=(DmaHandle&& other) = delete;
+
+        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferOne;
+        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferTwo;
+
+        /*
+            This function initializes DMA to work on:
+            - Stream 5 - Channel 4 -> USART1 with DMA2
+            - Direct Mode
+            - Double buffer
+            - 1 byte word
+        */
+        void init(uint32_t* peripheral_reg_addr);
 };
 
 #endif
