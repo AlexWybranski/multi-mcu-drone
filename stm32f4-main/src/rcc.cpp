@@ -1,5 +1,4 @@
 #include "rcc.hpp"
-#include <cstdint>
 
 namespace RCC_SETUP {
     constexpr uint32_t FLASH_BASEADDR = 0x40023C00;

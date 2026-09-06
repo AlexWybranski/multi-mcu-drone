@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_C_COMPILER arm-none-eabi-gcc CACHE STRING "C compiler" FORCE)
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-
-set(CMAKE_SYSTEM_NAME Generic CACHE STRING "Target system" FORCE)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
@@ -47,19 +45,3 @@ add_custom_target(load
     DEPENDS ${PROJECT_NAME}.elf
     COMMENT "Loading main.elf to board via OpenOCD..."    
 )
-
-file(GLOB_RECURSE ALL_CPP_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-
-add_custom_target(clang-hicpp
-    COMMAND clang-tidy 
-        ${ALL_CPP_FILES}
-        -p=${CMAKE_BINARY_DIR} 
-        --checks=-*,cppcoreguidelines-*,hicpp-*
-        --config=""
-        --header-filter=inc/*.hpp
-        -extra-arg=-I${CMAKE_CURRENT_SOURCE_DIR}/inc
-        -extra-arg=--target=arm-none-eabi
-    DEPENDS ${PROJECT_NAME}.elf
-    COMMENT "Running Clang-Tidy on C++ source files only..."
-)
-

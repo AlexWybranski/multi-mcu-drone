@@ -2,6 +2,7 @@
 #define RCC_HPP
 #include <cstdint>
 
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct RCC_regs {
     volatile uint32_t   CR;
     volatile uint32_t   PLLCFGR;
@@ -10,49 +11,49 @@ struct RCC_regs {
     volatile uint32_t   AHB1RSTR;
     volatile uint32_t   AHB2RSTR;
 
-    const uint32_t      RESERVED;
-    const uint32_t      RESERVED1;
+    const uint32_t      RESERVED; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const uint32_t      RESERVED1; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   APB1RSTR;
     volatile uint32_t   APB2RSTR;
 
-    const uint32_t      RESERVER2;
-    const uint32_t      RESERVED3;
+    const uint32_t      RESERVER2; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const uint32_t      RESERVED3; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   AHB1ENR;
     volatile uint32_t   AHB2ENR;
 
-    const uint32_t      RESERVER4;
-    const uint32_t      RESERVED5;
+    const uint32_t      RESERVER4; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const uint32_t      RESERVED5; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   APB1ENR;
     volatile uint32_t   APB2ENR;
 
-    const uint32_t      RESERVED6;
-    const uint32_t      RESERVED7;
+    const uint32_t      RESERVED6; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const uint32_t      RESERVED7; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   AHB1LPENR;
     volatile uint32_t   AHB2LPENR;
 
-    const uint32_t      RESERVED8;
-    const uint32_t      RESERVED9;
+    const uint32_t      RESERVED8; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const uint32_t      RESERVED9; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   APB1LPENR;
     volatile uint32_t   APB2LPENR;
 
-    const uint32_t      RESERVED10;
-    const uint32_t      RESERVED11;
+    const uint32_t      RESERVED10; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const uint32_t      RESERVED11; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   BDCR;
     volatile uint32_t   CSR;
 
-    const uint32_t      RESERVED12;
-    const uint32_t      RESERVED13;
+    const uint32_t      RESERVED12; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const uint32_t      RESERVED13; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   SSCGR;
     volatile uint32_t   PLLI2SCFGR;
 
-    const uint32_t      RESERVED14;
+    const uint32_t      RESERVED14; //NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     volatile uint32_t   DCKCFGR;
 };

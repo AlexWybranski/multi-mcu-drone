@@ -2,6 +2,7 @@
 #define USART_HPP
 #include <cstdint>
 
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct USART_regs {
     volatile uint32_t SR;
     volatile uint32_t DR;

@@ -4,6 +4,7 @@
 /*
     This class is supposed to be used with TIM1 (Advanced Control Timer)
 */
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct TIM1_regs {
     volatile uint32_t CR1;
     volatile uint32_t CR2;

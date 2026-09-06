@@ -29,6 +29,7 @@ namespace DMA_SETUP {
     constexpr uint32_t CLEAR_TCF = (0b1U << 11U); //CTCIFx bit
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct DMA_regs {
     volatile uint32_t LISR;
     volatile uint32_t HISR;
@@ -97,8 +98,8 @@ class DmaHandle {
         DmaHandle(DmaHandle&& other) = delete;
         DmaHandle& operator=(DmaHandle&& other) = delete;
 
-        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferOne;
-        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferTwo;
+        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferOne{};
+        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferTwo{};
 
         /*
             This function initializes DMA to work on:
@@ -108,6 +109,8 @@ class DmaHandle {
             - 1 byte word
         */
         void init(uint32_t* peripheral_reg_addr);
+
+        static void handleIRQ();
 };
 
 #endif

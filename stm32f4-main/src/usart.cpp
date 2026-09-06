@@ -1,5 +1,4 @@
 #include "usart.hpp"
-#include <cstdint>
 
 namespace USART_SETUP {
     constexpr uint32_t REG_RESET_VAL = 0U;

@@ -2,6 +2,7 @@
 #define GPIO_HPP
 #include <cstdint>
 
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct GPIO_regs {
     volatile uint32_t MODER;
     volatile uint32_t OTYPER;
@@ -50,7 +51,7 @@ class GpioHandle {
         };
 
         /*
-            Since alternate functions varies between pins and ports always verify correct function for purpose in datasheet
+            Since alternate functions varies between pins and ports always verify correct function for purpose in STM32F411 datasheet
         */
         enum class Func : uint32_t {
             AF00 = 0b0000U,

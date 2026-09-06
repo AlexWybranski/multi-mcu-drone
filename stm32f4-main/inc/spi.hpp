@@ -2,6 +2,14 @@
 #define SPI_HPP
 #include <cstdint>
 
+#include "gpio.hpp"
+
+namespace constants {
+    constexpr std::size_t TX_BUFFER_SIZE = 32;
+    constexpr std::size_t RX_BUFFER_SIZE = 32;
+}
+
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct SPI_regs {
     volatile uint32_t CR1;
     volatile uint32_t CR2;
@@ -19,14 +27,29 @@ class SpiHandle {
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         SPI_regs* const m_SPI; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
+        GpioHandle* GPIO_ptr{nullptr};
+        uint32_t m_CS_PIN{0};
+
+        uint8_t* m_txBuff{};
+        volatile std::size_t m_txIndex{0};
+        uint8_t* m_rxBuff{};
+        volatile std::size_t m_rxIndex{0};
+        std::size_t m_size{0};
+        bool m_writeOnly{false};
+        bool m_transferComplete{false};
+
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
-        explicit SpiHandle(uint32_t baseAddr) : m_SPI(reinterpret_cast<SPI_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        explicit SpiHandle(uint32_t baseAddr, GpioHandle* GPIO_PORT_ptr) : m_SPI(reinterpret_cast<SPI_regs*>(baseAddr)), GPIO_ptr(GPIO_PORT_ptr) { // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            instance = this;
+        }
         ~SpiHandle() = default;
         SpiHandle(const SpiHandle& other) = delete;
         SpiHandle& operator=(const SpiHandle& other) = delete;
         SpiHandle(SpiHandle&& other) = delete;
         SpiHandle& operator=(SpiHandle&& other) = delete;
+
+        static SpiHandle* instance;
 
         /*
             SPI is being initialized to work on:
@@ -42,7 +65,13 @@ class SpiHandle {
                 - RX interrupts
                 - Error interrupts
         */
-        void init();
+        void init(uint32_t CS_PIN_NUM);
+
+        void read_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly);
+
+        void setCsHigh();
+
+        void handleIRQ();
 };
 
 #endif
