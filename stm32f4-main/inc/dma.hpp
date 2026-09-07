@@ -1,7 +1,6 @@
 #ifndef DMA_HPP
 #define DMA_HPP
 #include <cstdint>
-#include <array>
 
 namespace DMA_SETUP {
     //SxCR
@@ -98,9 +97,6 @@ class DmaHandle {
         DmaHandle(DmaHandle&& other) = delete;
         DmaHandle& operator=(DmaHandle&& other) = delete;
 
-        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferOne{};
-        alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferTwo{};
-
         /*
             This function initializes DMA to work on:
             - Stream 5 - Channel 4 -> USART1 with DMA2
@@ -108,7 +104,7 @@ class DmaHandle {
             - Double buffer
             - 1 byte word
         */
-        void init(uint32_t* peripheral_reg_addr);
+        void init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t* bufferTwo);
 
         static void handleIRQ();
 };

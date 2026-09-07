@@ -91,17 +91,29 @@ void RccHandle::setClock() {
 void RccHandle::enableAHB1PeripheralClock(uint32_t peripheralBit) {
     uint32_t PERIPHERAL_EN = (0b1U << peripheralBit);
 
+    if(m_RCC->AHB1ENR & PERIPHERAL_EN) {
+        return;
+    }
+
     m_RCC->AHB1ENR |= PERIPHERAL_EN;
 }
 
 void RccHandle::enableAPB1PeripheralClock(uint32_t peripheralBit) {
     uint32_t PERIPHERAL_EN = (0b1U << peripheralBit);
 
+    if(m_RCC->APB1ENR & PERIPHERAL_EN) {
+        return;
+    }
+
     m_RCC->APB1ENR |= PERIPHERAL_EN;
 }
 
-void RccHandle::enableTim1Clock() {
-    constexpr uint32_t TIM1_EN = (0b1U << 0U);
+void RccHandle::enableAPB2PeripheralClock(uint32_t peripheralBit) {
+    uint32_t PERIPHERAL_EN = (0b1U << peripheralBit);
 
-    m_RCC->APB2ENR |= TIM1_EN;
+    if(m_RCC->APB2ENR & PERIPHERAL_EN) {
+        return;
+    }
+
+    m_RCC->APB2ENR |= PERIPHERAL_EN;
 }

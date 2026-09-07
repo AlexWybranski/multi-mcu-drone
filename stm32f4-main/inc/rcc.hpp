@@ -62,6 +62,8 @@ class RccHandle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         RCC_regs* const m_RCC; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
+        constexpr uint32_t calculatePllCfgrValue();
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
         explicit RccHandle(uint32_t baseAddr) : m_RCC(reinterpret_cast<RCC_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -70,8 +72,6 @@ class RccHandle {
         RccHandle& operator=(const RccHandle& other) = delete;
         RccHandle(RccHandle&& other) = delete;
         RccHandle& operator=(RccHandle&& other) = delete;
-
-        constexpr static uint32_t calculatePllCfgrValue();
 
         /*
             This function is supposed to be executed before any other to ensure proper frequency for all peripherals
@@ -82,7 +82,7 @@ class RccHandle {
 
         void enableAPB1PeripheralClock(uint32_t peripheralBit);
 
-        void enableTim1Clock();
+        void enableAPB2PeripheralClock(uint32_t peripheralBit);
 };
 
 #endif

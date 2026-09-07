@@ -2,7 +2,7 @@
 
 #include <bit>
 
-void DmaHandle::init(uint32_t* peripheral_reg_addr) {
+void DmaHandle::init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t* bufferTwo) {
     using namespace DMA_SETUP;
 
     m_DMA->S5CR &= ~ENABLE;
@@ -30,8 +30,8 @@ void DmaHandle::init(uint32_t* peripheral_reg_addr) {
 
     m_DMA->S5PAR = std::bit_cast<uint32_t>(peripheral_reg_addr);
 
-    m_DMA->S5M0AR = std::bit_cast<uint32_t>(bufferOne.data());
-    m_DMA->S5M1AR = std::bit_cast<uint32_t>(bufferTwo.data());
+    m_DMA->S5M0AR = std::bit_cast<uint32_t>(bufferOne);
+    m_DMA->S5M1AR = std::bit_cast<uint32_t>(bufferTwo);
 
     m_DMA->S5CR |= DMA_SETUP::ENABLE;
 }
