@@ -94,21 +94,25 @@ void SpiHandle::setCsHigh() {
 void SpiHandle::handleIRQ() {
     using namespace SPI_SETUP;
 
-    if ((m_SPI->SR & SR_RXNE) && (m_SPI->CR2 & CR2_RXNEIE)) {
-        if (m_writeOnly) {
-            [[maybe_unused]]uint32_t dummy = m_SPI->DR;
-            std::size_t helper = m_rxIndex;
-            helper++;
-            m_rxIndex = helper;
-        } else {
+    if((m_SPI->SR & SR_RXNE) && (m_SPI->CR2 & CR2_RXNEIE)) {
+        if(!m_writeOnly && (m_byteCounter % 2 != 0)) {
             m_rxBuff[m_rxIndex] = static_cast<uint8_t>(m_SPI->DR);
             std::size_t helper = m_rxIndex;
+            std::size_t byteHelper = m_byteCounter;
             helper++;
+            byteHelper++;
             m_rxIndex = helper;
+            m_byteCounter = byteHelper;
+        } else {
+            [[maybe_unused]]uint32_t dummy = m_SPI->DR;
+            std::size_t byteHelper = m_byteCounter;
+            byteHelper++;
+            m_byteCounter = byteHelper;
         }
-        if(m_rxIndex >= m_size) {
+        if(m_byteCounter >= m_size) {
             m_SPI->CR2 &= ~CR2_RXNEIE;
             m_rxIndex = 0;
+            m_byteCounter = 0;
             SpiHandle::setCsHigh();
         }
     }
@@ -118,7 +122,7 @@ void SpiHandle::handleIRQ() {
         std::size_t helper = m_txIndex;
         helper++;
         m_txIndex = helper;
-        if (m_txIndex >= m_size) {
+        if(m_txIndex >= m_size) {
             m_SPI->CR2 &= ~CR2_TXEIE;
             m_txIndex = 0;
         }
@@ -133,6 +137,7 @@ void SpiHandle::handleIRQ() {
 
         m_rxIndex = 0;
         m_txIndex = 0;
+        m_byteCounter = 0;
         SpiHandle::setCsHigh();
     }
 }

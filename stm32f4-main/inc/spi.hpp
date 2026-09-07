@@ -35,8 +35,8 @@ class SpiHandle {
         uint8_t* m_rxBuff{};
         volatile std::size_t m_rxIndex{0};
         std::size_t m_size{0};
+        volatile std::size_t m_byteCounter{0};
         bool m_writeOnly{false};
-        bool m_transferComplete{false};
 
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
