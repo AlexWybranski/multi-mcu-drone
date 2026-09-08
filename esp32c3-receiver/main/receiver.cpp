@@ -4,6 +4,7 @@
 
 extern "C" {
     #include "esp_wifi.h"
+    #include "driver/ledc.h"
 }
 
 void Receiver::initEspNowProtocol() {
@@ -30,16 +31,36 @@ void Receiver::initEspNowProtocol() {
 }
 
 void Receiver::onReceive(const esp_now_recv_info_t* info, const uint8_t* data, int data_len) {
+    using namespace PWM_SETUP;
+
     DroneControlPacket receivedPacket;
 
     if(data_len == sizeof(DroneControlPacket)) {
+        uart_write_bytes(m_uart_num, data, static_cast<size_t>(data_len));
+        
         std::memcpy(&receivedPacket, data, data_len);
         
         Receiver::m_packet = receivedPacket;
 
-        int wyslane = uart_write_bytes(m_uart_num, data, static_cast<size_t>(data_len));
+        if(m_packet.buttonControlReg & ControlRegister::CAM_UP) {
+            duty-=PWM_STEP;
+        }
+        
+        if(m_packet.buttonControlReg & ControlRegister::CAM_DOWN) {
+            duty+=PWM_STEP;
+        }
 
-        esp_rom_printf("UART wyslal bajtow: %d\n", wyslane);
+        if (duty < PWM_MIN_DUTY) {
+            duty = PWM_MIN_DUTY;
+        }
+
+        if (duty > PWM_MAX_DUTY) {
+            duty = PWM_MAX_DUTY; 
+        }
+
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty));
+
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
 
         esp_rom_printf("[RCV] Throttle: %u | Pitch: %u | Roll: %u | Buttons: %u | CRC: %X\n", Receiver::m_packet.throttle, Receiver::m_packet.pitch, Receiver::m_packet.roll, Receiver::m_packet.buttonControlReg, Receiver::m_packet.crcValue);
     } else {
@@ -65,4 +86,30 @@ void Receiver::initUart() {
     ESP_ERROR_CHECK(uart_param_config(m_uart_num, &uart_config));
 
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, 17, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+}
+
+void Receiver::initPwm() {
+    using namespace PWM_SETUP;
+
+    ledc_timer_config_t timer_config{};
+
+    timer_config.speed_mode = LEDC_LOW_SPEED_MODE;
+    timer_config.duty_resolution = LEDC_TIMER_13_BIT;
+    timer_config.timer_num = LEDC_TIMER_0;
+    timer_config.freq_hz = PWM_HZ;
+    timer_config.clk_cfg = LEDC_AUTO_CLK;
+
+    ESP_ERROR_CHECK(ledc_timer_config(&timer_config));
+    
+
+    ledc_channel_config_t ledc_channel{};
+
+    ledc_channel.speed_mode = LEDC_LOW_SPEED_MODE;
+    ledc_channel.channel = LEDC_CHANNEL_0;
+    ledc_channel.timer_sel = LEDC_TIMER_0;
+    ledc_channel.gpio_num = PWM_OUT_PIN;
+    ledc_channel.duty = PWM_MIN_DUTY;
+    ledc_channel.hpoint = PWM_HPOINT;
+
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 }
