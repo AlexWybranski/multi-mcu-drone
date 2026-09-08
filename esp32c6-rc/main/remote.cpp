@@ -33,7 +33,6 @@ DroneControlPacket RemoteControl::getAndClearPacket() {
         using namespace ConstantValues;
         std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
         packet = m_sharedPacket;
-        m_sharedPacket.buttonControlReg = N_BUTTON_REG;
         m_sharedPacket.crcValue = 0;
     }
 
@@ -99,31 +98,37 @@ void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_
         
     if (buttons & BUTTON_SHOULDER_L) {
         m_currentPacket.buttonControlReg |= ControlRegister::YAW_LEFT;
+    } else if ((dpad & BUTTON_SHOULDER_L) == 0) {
+        m_currentPacket.buttonControlReg &= ~ControlRegister::YAW_LEFT;
     }
 
     if (buttons & BUTTON_SHOULDER_R) {
         m_currentPacket.buttonControlReg |= ControlRegister::YAW_RIGHT;
+    } else if ((dpad & BUTTON_SHOULDER_R) == 0) {
+        m_currentPacket.buttonControlReg &= ~ControlRegister::YAW_RIGHT;
     }
 
     if (buttons & BUTTON_A) {
         m_currentPacket.buttonControlReg |= ControlRegister::START_STOP_ENGINE;
+    } else if ((dpad & BUTTON_A) == 0) {
+        m_currentPacket.buttonControlReg &= ~ControlRegister::START_STOP_ENGINE;
     }
 
     if(dpad & DPAD_UP) {
         m_currentPacket.buttonControlReg |= ControlRegister::CAM_UP;
+    } else if ((dpad & DPAD_UP) == 0) {
+        m_currentPacket.buttonControlReg &= ~ControlRegister::CAM_UP;
     }
 
     if(dpad & DPAD_DOWN) {
         m_currentPacket.buttonControlReg |= ControlRegister::CAM_DOWN;
+    } else if ((dpad & DPAD_DOWN) == 0) {
+        m_currentPacket.buttonControlReg &= ~ControlRegister::CAM_DOWN;
     }
 
     {
         std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
         m_sharedPacket = m_currentPacket;
-    }
-
-    {
-        m_currentPacket.buttonControlReg &= ConstantValues::RST_BUTTONS;
     }
 }
 
