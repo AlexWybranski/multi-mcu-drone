@@ -29,10 +29,10 @@ extern "C" {
     struct uni_platform* get_my_platform(void);
 }
 
-constexpr size_t ESP_NOW_TASK_STACK_SIZE = 2048;
-constexpr uint32_t ESP_NOW_TASK_DELAY_MS = 20;
+constexpr size_t ESP_NOW_TASK_STACK_SIZE = 2048U;
+constexpr uint32_t ESP_NOW_TASK_DELAY_MS = 20U;
 
-StackType_t txEspNowTask[ESP_NOW_TASK_STACK_SIZE*4];
+StackType_t txEspNowTask[ESP_NOW_TASK_STACK_SIZE*4U];
 StaticTask_t txEspNowTaskBuffer;
 TaskHandle_t txEspNowTaskHandle;
 
