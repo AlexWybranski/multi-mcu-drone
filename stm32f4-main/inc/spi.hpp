@@ -37,6 +37,7 @@ class SpiHandle {
         std::size_t m_size{0};
         volatile std::size_t m_byteCounter{0};
         bool m_writeOnly{false};
+        const uint32_t m_dummyByte = 0xFF;
 
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used

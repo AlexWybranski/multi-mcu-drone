@@ -78,7 +78,7 @@ void SpiHandle::read_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, b
 
     m_rxBuff = rxBuff;
     m_txBuff = txBuff;
-    m_size = size;
+    m_size = size * 2U;
     m_writeOnly = writeOnly;
                             
     m_SPI->CR2 |= CR2_RXNEIE;
@@ -111,20 +111,22 @@ void SpiHandle::handleIRQ() {
         }
         if(m_byteCounter >= m_size) {
             m_SPI->CR2 &= ~CR2_RXNEIE;
+            m_SPI->CR2 &= ~CR2_TXEIE;
             m_rxIndex = 0;
+            m_txIndex = 0;
             m_byteCounter = 0;
             SpiHandle::setCsHigh();
         }
     }
 
     if((m_SPI->SR & SR_TXE) && (m_SPI->CR2 & CR2_TXEIE)) {
-        m_SPI->DR = m_txBuff[m_txIndex];
-        std::size_t helper = m_txIndex;
-        helper++;
-        m_txIndex = helper;
-        if(m_txIndex >= m_size) {
-            m_SPI->CR2 &= ~CR2_TXEIE;
-            m_txIndex = 0;
+        if (!m_writeOnly && (m_byteCounter % 2 != 0)) {
+            m_SPI->DR = m_dummyByte;
+        } else {
+            m_SPI->DR = m_txBuff[m_txIndex];
+            std::size_t helper = m_txIndex;
+            helper++;
+            m_txIndex = helper;
         }
     }
 
