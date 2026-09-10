@@ -75,6 +75,7 @@ class RccHandle {
 
         /*
             This function is supposed to be executed before any other to ensure proper frequency for all peripherals
+            Sets sysclk to PLL sourced by HSE, sysclk works on 48MHz
         */
         void setClock();
 

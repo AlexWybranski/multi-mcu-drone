@@ -1,7 +1,8 @@
 #include <cstdint>
 #include <array>
 
-#include "FreeRTOSConfig.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #include "stm32f4.hpp"
 #include "rcc.hpp"
@@ -12,15 +13,42 @@
 #include "gpio.hpp"
 #include "nvic.hpp"
 
-extern "C" {
-    void _init(void) {} 
-}
+// extern "C" block excluded from linter, due to freertos functions breaking the rules
+extern "C" { //NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers, cppcoreguidelines-pro-bounds-array-to-pointer-decay,hicpp-no-array-decay)
+    void _init(void) {}
+    void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
+                                        StackType_t **ppxIdleTaskStackBuffer,
+                                        uint32_t *pulIdleTaskStackSize )
+    {
+        static StaticTask_t xIdleTaskTCB;
+        static StackType_t uxIdleTaskStack[128];
+
+        *ppxIdleTaskTCBBuffer = &xIdleTaskTCB;
+        *ppxIdleTaskStackBuffer = uxIdleTaskStack;
+        *pulIdleTaskStackSize = 128;
+    }
+
+    void DMA2_Stream5_IRQHandler() {
+        DmaHandle::instance->handleIRQ();
+    }
+
+    void SPI2_IRQHandler() {
+        SpiHandle::instance->handleIRQ();
+    }
+} //NOLINTEND
 
 int main() {
     // alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferOne{};
     // alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferTwo{};
-    RccHandle rcc(PeripheralBaseAddr::RCC_BASEADDR);
+    static RccHandle rcc(PeripheralBaseAddr::RCC_BASEADDR);
     rcc.setClock();
+
+    static Nvic nvic(PeripheralBaseAddr::NVIC_BASEADDR);
+    nvic.enableIRQ(NVIC_IRQs::SPI2_IRQ);
+    nvic.setIrqPriority(NVIC_IRQs::SPI2_IRQ, NVIC_IRQs::SPI2_IRQ_Priority);
+    nvic.enableIRQ(NVIC_IRQs::DMA2_Stream5_IRQ);
+    nvic.setIrqPriority(NVIC_IRQs::DMA2_Stream5_IRQ, NVIC_IRQs::DMA2_Stream5_IRQ_Priority);
+
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOAEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOBEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::DMA2EN);
@@ -31,14 +59,14 @@ int main() {
     rcc.enableAPB2PeripheralClock(APB2_PERIPHERAL_BITS::USART1EN);
     rcc.enableAPB2PeripheralClock(APB2_PERIPHERAL_BITS::TIM1EN);
     
-    GpioHandle gpioA(PeripheralBaseAddr::GPIOA_BASEADDR);
-    GpioHandle gpioB(PeripheralBaseAddr::GPIOB_BASEADDR);
+    static GpioHandle gpioA(PeripheralBaseAddr::GPIOA_BASEADDR);
+    static GpioHandle gpioB(PeripheralBaseAddr::GPIOB_BASEADDR);
 
-    UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
+    static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
 
-    SpiHandle spi2(PeripheralBaseAddr::SPI2_BASEADDR, &gpioB);
+    static SpiHandle spi2(PeripheralBaseAddr::SPI2_BASEADDR, &gpioB);
 
-    DmaHandle dma2(PeripheralBaseAddr::DMA2_BASEADDR);
+    static DmaHandle dma2(PeripheralBaseAddr::DMA2_BASEADDR);
 
-    Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
+    static Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
 }

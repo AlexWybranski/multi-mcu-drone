@@ -4,7 +4,7 @@
 
 #include "gpio.hpp"
 
-namespace constants {
+namespace SPI_constants {
     constexpr std::size_t TX_BUFFER_SIZE = 32;
     constexpr std::size_t RX_BUFFER_SIZE = 32;
 }

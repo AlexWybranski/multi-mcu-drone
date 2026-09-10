@@ -90,12 +90,16 @@ class DmaHandle {
         DMA_regs* const m_DMA; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
-        explicit DmaHandle(uint32_t baseAddr) : m_DMA(reinterpret_cast<DMA_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        explicit DmaHandle(uint32_t baseAddr) : m_DMA(reinterpret_cast<DMA_regs*>(baseAddr)) { // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            instance = this;
+        } 
         ~DmaHandle() = default;
         DmaHandle(const DmaHandle& other) = delete;
         DmaHandle& operator=(const DmaHandle& other) = delete;
         DmaHandle(DmaHandle&& other) = delete;
         DmaHandle& operator=(DmaHandle&& other) = delete;
+
+        static DmaHandle* instance;
 
         /*
             This function initializes DMA to work on:
@@ -106,7 +110,7 @@ class DmaHandle {
         */
         void init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t* bufferTwo);
 
-        static void handleIRQ();
+        void handleIRQ();
 };
 
 #endif
