@@ -9,6 +9,39 @@ namespace SPI_constants {
     constexpr std::size_t RX_BUFFER_SIZE = 32;
 }
 
+namespace SPI_SETUP {
+    constexpr uint32_t CR1_BR_VAL = 0b010U; // pclk/8 -> 48 MHz / 8 = 6 MHz
+    constexpr uint32_t CR1_BR_SHIFT = 3U;
+    constexpr uint32_t CR1_SSM_VAL = 0b1U;
+    constexpr uint32_t CR1_SSM_SHIFT = 9U;
+    constexpr uint32_t CR1_SSI_VAL = 0b1U;
+    constexpr uint32_t CR1_SSI_SHIFT = 8U;
+    constexpr uint32_t CR1_CPHA_VAL = 0b1U;
+    constexpr uint32_t CR1_CPHA_SHIFT = 0;
+    constexpr uint32_t CR1_CPOL_VAL = 0b1U;
+    constexpr uint32_t CR1_CPOL_SHIFT = 1U;
+    constexpr uint32_t CR1_MSTR_VAL = 0b1U;
+    constexpr uint32_t CR1_MSTR_SHIFT = 2U;
+    constexpr uint32_t CR1_SPE_VAL = 0b1U;
+    constexpr uint32_t CR1_SPE_SHIFT = 6U;
+
+    constexpr uint32_t CR2_TXEIE_RESET = 0b1U;
+    constexpr uint32_t CR2_TXEIE_SHIFT = 7U;
+    constexpr uint32_t CR2_RXNEIE_RESET = 0b1U;
+    constexpr uint32_t CR2_RXNEIE_SHIFT = 6U;
+    constexpr uint32_t CR2_ERRIE_RESET = 0b1U;
+    constexpr uint32_t CR2_ERRIE_VAL = 0b1U;
+    constexpr uint32_t CR2_ERRIE_SHIFT = 5U;
+
+    constexpr uint32_t SR_OVR = (0b1U << 6U);
+    constexpr uint32_t SR_TXE = (0b1U << 1U);
+    constexpr uint32_t SR_RXNE = (0b1U << 0U);
+
+    constexpr uint32_t CR2_TXEIE = (0b1U << 7U);
+    constexpr uint32_t CR2_RXNEIE = (0b1U << 6U);
+    constexpr uint32_t CR2_ERRIE = (0b1U << 5U);
+}
+
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct SPI_regs {
     volatile uint32_t CR1;

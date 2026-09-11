@@ -50,7 +50,7 @@
 #define configSUPPORT_DYNAMIC_ALLOCATION		   	0
 #define configUSE_IDLE_HOOK						   	0
 #define configUSE_TICK_HOOK						   	0
-#define configCPU_CLOCK_HZ						    ( 48000000 )
+#define configCPU_CLOCK_HZ						    ( 48000000U )
 #define configTICK_RATE_HZ						    ( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES					    ( 5 )
 #define configMINIMAL_STACK_SIZE				    ( ( uint16_t ) 64 )
@@ -64,7 +64,7 @@
 #define configUSE_COUNTING_SEMAPHORES			   	1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION		0
 #define configUSE_MALLOC_FAILED_HOOK			   	0
-#define configCHECK_FOR_STACK_OVERFLOW			   	1
+#define configCHECK_FOR_STACK_OVERFLOW			   	0
 
 /* Defaults to size_t for backward compatibility, but can be changed
  * if lengths will always be less than the number of bytes in a size_t. */
@@ -81,7 +81,7 @@
  * to exclude the API function. */
 #define INCLUDE_vTaskPrioritySet				1
 #define INCLUDE_uxTaskPriorityGet				1
-#define INCLUDE_vTaskDelete						0
+#define INCLUDE_vTaskDelete						1
 #define INCLUDE_vTaskCleanUpResources			0
 #define INCLUDE_vTaskSuspend					1
 #define INCLUDE_xTaskDelayUntil					1

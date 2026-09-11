@@ -14,7 +14,8 @@
 #include "nvic.hpp"
 
 // extern "C" block excluded from linter, due to freertos functions breaking the rules
-extern "C" { //NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers, cppcoreguidelines-pro-bounds-array-to-pointer-decay,hicpp-no-array-decay)
+//NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers, cppcoreguidelines-pro-bounds-array-to-pointer-decay,hicpp-no-array-decay)
+extern "C" {
     void _init(void) {}
     void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
                                         StackType_t **ppxIdleTaskStackBuffer,
@@ -37,9 +38,27 @@ extern "C" { //NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers, cppcoreguidel
     }
 } //NOLINTEND
 
+void imuTask(void* pvParameters);
+void receiverTask(void* pvParameters);
+void enginesTask(void* pvParameters);
+void failsafeTask(void* pvParameters);
+
+StackType_t imuTaskStack[256];
+StackType_t receiverTaskStack[256];
+StackType_t enginesTaskStack[256];
+StackType_t failsafeTaskStack[256];
+
+StaticTask_t imuTaskBuffer;
+StaticTask_t receiverTaskBuffer;
+StaticTask_t enginesTaskBuffer;
+StaticTask_t failsafeTaskBuffer;
+
+TaskHandle_t imuTaskHandle = nullptr;
+TaskHandle_t receiverTaskHandle = nullptr;
+TaskHandle_t enginesTaskHandle = nullptr;
+TaskHandle_t failsafeTaskHandle = nullptr;
+
 int main() {
-    // alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferOne{};
-    // alignas(4) std::array<uint8_t, DMA_SETUP::NDTR_VAL> bufferTwo{};
     static RccHandle rcc(PeripheralBaseAddr::RCC_BASEADDR);
     rcc.setClock();
 
@@ -69,4 +88,73 @@ int main() {
     static DmaHandle dma2(PeripheralBaseAddr::DMA2_BASEADDR);
 
     static Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
+
+    imuTaskHandle = xTaskCreateStatic(
+        imuTask,
+        "imuTask",
+        256,
+        NULL,
+        5,
+        imuTaskStack,
+        &imuTaskBuffer);
+
+    receiverTaskHandle = xTaskCreateStatic(
+        receiverTask,
+        "receiverTask",
+        256,
+        &dma2,
+        5,
+        receiverTaskStack,
+        &receiverTaskBuffer);
+
+    enginesTaskHandle = xTaskCreateStatic(
+        enginesTask,
+        "enginesTask",
+        256,
+        NULL,
+        5,
+        enginesTaskStack,
+        &enginesTaskBuffer);
+
+    failsafeTaskHandle = xTaskCreateStatic(
+        failsafeTask,
+        "failsafeTask",
+        256,
+        NULL,
+        5,
+        failsafeTaskStack,
+        &failsafeTaskBuffer);
+}
+
+void imuTask(void* pvParameters) {
+
+    while(1) {
+
+    }
+}
+
+void receiverTask(void* pvParameters) {
+
+    while(1) {
+        
+    }
+}
+
+void enginesTask(void* pvParameters) {
+
+    while(1) {
+        
+    }
+}
+
+void failsafeTask(void* pvParameters) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    //ensure that only failsafe task is able to operate engines
+    vTaskDelete(enginesTaskHandle);
+    vTaskDelete(receiverTaskHandle);
+
+    while(1) {
+        
+    }
 }

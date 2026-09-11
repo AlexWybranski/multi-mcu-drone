@@ -2,6 +2,8 @@
 
 #include <bit>
 
+DmaHandle* DmaHandle::instance = nullptr;
+
 void DmaHandle::init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t* bufferTwo) {
     using namespace DMA_SETUP;
 
@@ -34,4 +36,8 @@ void DmaHandle::init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t*
     m_DMA->S5M1AR = std::bit_cast<uint32_t>(bufferTwo);
 
     m_DMA->S5CR |= DMA_SETUP::ENABLE;
+}
+
+void DmaHandle::handleIRQ() {
+    
 }

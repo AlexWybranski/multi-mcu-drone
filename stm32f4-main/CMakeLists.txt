@@ -16,7 +16,7 @@ set(CMAKE_C_FLAGS "-mthumb -mfloat-abi=hard -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -W
 set(CMAKE_CXX_FLAGS "-mthumb -mfloat-abi=hard -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -fno-exceptions -fno-rtti -fno-threadsafe-statics -std=gnu++23 -O0 -g")
 
 file(GLOB_RECURSE CPPSRCS "src/*.cpp")
-file(GLOB_RECURSE CSRCS "src/*.c" "startup/*.c")
+file(GLOB_RECURSE CSRCS "src/*.c" "startup/*.c" "freertos/source/*.c" "freertos/ARM_CM4F/port.c")
 
 add_executable(${PROJECT_NAME}.elf ${CSRCS} ${CPPSRCS})
 
