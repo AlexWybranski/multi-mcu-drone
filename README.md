@@ -12,8 +12,5 @@ This firmware is written primarily in C++. The breakdown of the software modules
 - [esp32s3-cam](esp32s3-cam/) - Camera module; not implemented at this stage of development.
 - [stm32f4-main](stm32f4-main/) - Main flight controller; serves as the brain of the drone, calculating PWM duty cycles for the motors based on UART RX data, accelerometer, and gyroscope inputs.
 
-## Architecture and data flow
-![Architecture diagram](docs/architecture_diagram.png)
-
 ## Credits
 - This project uses **[Bluepad32](https://github.com/ricardoquesada/bluepad32)** and its dependency **[BTStack](https://github.com/bluekitchen/btstack)** more about licensing and conditions in [LICENSE-3RD-PARTY](https://github.com/AlexWybranski/multi-mcu-drone/blob/master/LICENSE-3RD-PARTY.md)
