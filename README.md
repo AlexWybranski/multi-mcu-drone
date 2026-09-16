@@ -15,11 +15,23 @@ This firmware is written primarily in C++. The breakdown of the software modules
 ## Data flow
 ```mermaid
 flowchart LR
-    A[Remote Control] -.->|ESP-NOW| B[RECEIVER]
+%%{init: {'themeCSS': '.edgePath .path { stroke-linejoin: colons; stroke-linecap: square; }', 'flowchart': {'curve': 'linear'}}}%%
+    A[Remote Control] 
+    B[RECEIVER]
+    C[FLIGHT CONTROLLER]
+    D[SENSOR]
+    E[ESC]
+    F[SERVO]
+    G[CAM]
+    H[HTTP SERVER - VIDEO STREAM]
+
+    A -.->|ESP-NOW| B
+    G -.-> H
     subgraph On Drone
-    B -->|UART| C[FLIGHT CONTROLLER]
-    C <-->|SPI| D[SENSOR]
-    C -->|PWM| E[ESC]
+    B -->|UART| C
+    B -->|PWM| F ===|PHYSICAL CONNECTION|G
+    C <-->|SPI| D
+    C -->|PWM| E
     end
 ```
 
