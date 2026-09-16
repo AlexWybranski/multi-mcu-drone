@@ -15,7 +15,7 @@ This firmware is written primarily in C++. The breakdown of the software modules
 ## Data flow
 ```mermaid
 flowchart LR
-%%{init: {'themeCSS': '.edgePath .path { stroke-linejoin: colons; stroke-linecap: square; }', 'flowchart': {'curve': 'linear'}}}%%
+%%{init: { 'flowchart': { 'curve': 'stepAfter' }, 'themeCSS': '.edgePath .path { stroke-linejoin: miter; stroke-linecap: square; }' } }%%
     A[Remote Control] 
     B[RECEIVER]
     C[FLIGHT CONTROLLER]
