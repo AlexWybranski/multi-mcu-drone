@@ -30,13 +30,22 @@ extern "C" {
 }
 
 constexpr size_t ESP_NOW_TASK_STACK_SIZE = 2048U;
+constexpr size_t INDICATOR_TASK_STACK_SIZE = 2048U;
 constexpr uint32_t ESP_NOW_TASK_DELAY_MS = 20U;
 
 StackType_t txEspNowTask[ESP_NOW_TASK_STACK_SIZE*4U];
 StaticTask_t txEspNowTaskBuffer;
 TaskHandle_t txEspNowTaskHandle;
 
+StackType_t indicatorTask[INDICATOR_TASK_STACK_SIZE*4U];
+StaticTask_t indicatorTaskBuffer;
+TaskHandle_t indicatorTaskHandle;
+
+EventGroupHandle_t indicatorEventGroupHandle;
+StaticEventGroup_t indicatorEventGroup;
+
 void txEspNowTaskFunc(void* pvParameters);
+void indicatorTaskFunc(void* pvParameters);
 
 // Sanity check
 static_assert(
@@ -60,6 +69,8 @@ int app_main(void) {
 
     RemoteControl::initNeutralCRC();
 
+    indicatorEventGroupHandle = xEventGroupCreateStatic(&indicatorEventGroup);
+
     txEspNowTaskHandle = xTaskCreateStaticPinnedToCore
     (
         txEspNowTaskFunc,
@@ -71,6 +82,19 @@ int app_main(void) {
         &txEspNowTaskBuffer,
         tskNO_AFFINITY
     );
+
+    // indicatorTaskHandle = xTaskCreateStaticPinnedToCore
+    // (
+    //     indicatorTaskFunc,
+    //     "indicatorTask",
+    //     INDICATOR_TASK_STACK_SIZE,
+    //     nullptr,
+    //     3,
+    //     indicatorTask,
+    //     &indicatorTaskBuffer,
+    //     tskNO_AFFINITY
+    // );
+
 
     // Configure BTstack for ESP32 VHCI Controller
     btstack_init();
@@ -88,19 +112,32 @@ int app_main(void) {
 }
 
 void txEspNowTaskFunc(void* pvParameters) {
+    using namespace ConstantValues;
+
     static_cast<void>(pvParameters);
 
     TickType_t xLastWakeTime;
     const TickType_t xFrequency = pdMS_TO_TICKS(ESP_NOW_TASK_DELAY_MS);
+
+    EventBits_t indicatorBits;
+
+    RemoteControl::initLed();
 
     xLastWakeTime = xTaskGetTickCount();
 
     while(1) {
         DroneControlPacket packet = RemoteControl::getAndClearPacket();
 
-        RemoteControl::sendPacket(&packet);
+        indicatorBits = xEventGroupGetBits(indicatorEventGroupHandle);
 
-        esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %u, Roll: %u, Buttons: %u, CRC: %X\n", packet.throttle, packet.pitch, packet.roll, packet.buttonControlReg, packet.crcValue);
+        if(indicatorBits & xPadConnected) {
+            gpio_set_level(GREEN_LED, SET_HIGH);
+            RemoteControl::sendPacket(&packet);
+            esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %u, Roll: %u, Buttons: %u, CRC: %X\n", packet.throttle, packet.pitch, packet.roll, packet.buttonControlReg, packet.crcValue);
+        } else {
+            esp_rom_printf("Pad NOT connected\n");
+            gpio_set_level(GREEN_LED, SET_LOW);
+        }
 
         xTaskDelayUntil(&xLastWakeTime, xFrequency);
     }

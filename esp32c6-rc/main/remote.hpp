@@ -10,7 +10,12 @@
 extern "C" {
     #include "esp_now.h"
     #include "esp_rom_crc.h"
+    #include "driver/gpio.h"
+    #include "freertos/FreeRTOS.h"
+    #include "freertos/event_groups.h"
 }
+
+extern EventGroupHandle_t indicatorEventGroupHandle;
 
 namespace ConstantValues {
     constexpr int32_t DEAD_ZONE = 50;
@@ -32,6 +37,13 @@ namespace ConstantValues {
     constexpr uint32_t N_CRC_CALC_VALUE = 0xFFFFFFFFU;
 
     constexpr uint8_t RST_BUTTONS = ~(ControlRegister::CAM_DOWN | ControlRegister::CAM_UP | ControlRegister::YAW_LEFT | ControlRegister::YAW_RIGHT | ControlRegister::START_STOP_ENGINE);
+
+    constexpr gpio_num_t GREEN_LED = GPIO_NUM_21;
+    constexpr uint32_t SET_HIGH = 1;
+    constexpr uint32_t SET_LOW = 0;
+    constexpr uint32_t GREEN_BLINK_FREQ = 300; //300ms
+
+    constexpr EventBits_t xPadConnected = (0b1U << 0U); 
 };
 
 namespace ButtonMasks {
@@ -63,12 +75,10 @@ class RemoteControl {
         static inline uint32_t N_PACKET_CRC;
         
         static inline esp_now_peer_info_t m_peer;
-
-        static inline bool m_isPadReady{false};
-
-        public:
+        
+    public:
         RemoteControl() = delete;
-
+        
         static DroneControlPacket getAndClearPacket();
         
         static void calculateCRC(DroneControlPacket* dronePacket);
@@ -86,6 +96,8 @@ class RemoteControl {
         This function initiates both wifi and esp_now protocol
         */
         static void initRemoteConnection();
+
+        static void initLed();
 
         static void handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_ry, uint32_t buttons, uint8_t dpad);
 

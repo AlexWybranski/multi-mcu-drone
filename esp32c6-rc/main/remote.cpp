@@ -48,10 +48,16 @@ void RemoteControl::sendPacket(DroneControlPacket *packet) {
         
     std::memcpy(buffer.data(), packet, PACKET_SIZE);
 
-    if(m_isPadReady) {
-        esp_now_send(RemoteControl::m_peer.peer_addr, buffer.data(), PACKET_SIZE);
-    }
+    esp_now_send(RemoteControl::m_peer.peer_addr, buffer.data(), PACKET_SIZE);
+}
 
+void RemoteControl::initLed() {
+    using namespace ConstantValues;
+
+    gpio_reset_pin(GREEN_LED);
+    gpio_set_direction(GREEN_LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(GREEN_LED, SET_LOW);
+    gpio_set_pull_mode(GREEN_LED, GPIO_FLOATING);
 }
 
 void RemoteControl::initRemoteConnection() {
@@ -139,12 +145,11 @@ void RemoteControl::padDisconnected() {
         m_sharedPacket.buttonControlReg |= ControlRegister::NO_PAD;
     }
     vTaskDelay(pdMS_TO_TICKS(DELAY_TILL_DISCONNECT));
-    m_isPadReady = false;
+    xEventGroupClearBitsFromISR(indicatorEventGroupHandle, ConstantValues::xPadConnected);
 }
 
 void RemoteControl::padReady() {
-    m_isPadReady = true;
-
+    xEventGroupSetBits(indicatorEventGroupHandle, ConstantValues::xPadConnected);
     //clear in case of reconnect
     m_sharedPacket.buttonControlReg &= ~ControlRegister::NO_PAD;
 }
