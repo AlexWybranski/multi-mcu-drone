@@ -1,6 +1,12 @@
 #ifndef DMA_HPP
 #define DMA_HPP
 #include <cstdint>
+#include <array>
+
+extern "C" {
+    #include "FreeRTOS.h"
+    #include "task.h"
+}
 
 namespace DMA_SETUP {
     //SxCR
@@ -17,6 +23,8 @@ namespace DMA_SETUP {
 
     constexpr uint32_t PER_TO_MEM_DIRECTION = ~(0b11U << 6U);
 
+    constexpr uint32_t CURRENT_TARGET = (0b1U << 19U);
+
     constexpr uint32_t TCIE = (0b1U << 4U);
 
     constexpr uint32_t ENABLE = (0b1U << 0U);
@@ -26,6 +34,9 @@ namespace DMA_SETUP {
 
     //HIFCR
     constexpr uint32_t CLEAR_TCF = (0b1U << 11U); //CTCIFx bit
+
+    //HISR
+    constexpr uint32_t HISR_TCIF5 = (0b1U << 11U);
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
@@ -88,6 +99,11 @@ class DmaHandle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         DMA_regs* const m_DMA; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
+        std::array<volatile uint8_t, DMA_SETUP::NDTR_VAL> bufferOne;
+        std::array<volatile uint8_t, DMA_SETUP::NDTR_VAL> bufferTwo;
+
+        TaskHandle_t m_taskToNotify;
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
         explicit DmaHandle(uint32_t baseAddr) : m_DMA(reinterpret_cast<DMA_regs*>(baseAddr)) { // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -108,7 +124,7 @@ class DmaHandle {
             - Double buffer
             - 1 byte word
         */
-        void init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t* bufferTwo);
+        void init(uint32_t* peripheral_reg_addr, TaskHandle_t taskToNofify);
 
         void handleIRQ();
 };

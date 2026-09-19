@@ -4,8 +4,14 @@
 
 DmaHandle* DmaHandle::instance = nullptr;
 
-void DmaHandle::init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t* bufferTwo) {
+/*
+    @param peripheral_reg_addr - register from which dma will take data
+    @param taskToNotify - task that will be notified and get pointer to buffer to read data from
+*/
+void DmaHandle::init(uint32_t* peripheral_reg_addr, TaskHandle_t taskToNotify) {
     using namespace DMA_SETUP;
+
+    m_taskToNotify = taskToNotify;
 
     m_DMA->S5CR &= ~ENABLE;
 
@@ -32,12 +38,38 @@ void DmaHandle::init(uint32_t* peripheral_reg_addr, uint8_t* bufferOne, uint8_t*
 
     m_DMA->S5PAR = std::bit_cast<uint32_t>(peripheral_reg_addr);
 
-    m_DMA->S5M0AR = std::bit_cast<uint32_t>(bufferOne);
-    m_DMA->S5M1AR = std::bit_cast<uint32_t>(bufferTwo);
+    m_DMA->S5M0AR = reinterpret_cast<uint32_t>(DmaHandle::bufferOne.data());
+    m_DMA->S5M1AR = reinterpret_cast<uint32_t>(DmaHandle::bufferTwo.data());
 
     m_DMA->S5CR |= DMA_SETUP::ENABLE;
 }
 
 void DmaHandle::handleIRQ() {
+    using namespace DMA_SETUP;
     
+    if (m_DMA->HISR & HISR_TCIF5) {
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+        if (m_DMA->S5CR & CURRENT_TARGET) {
+            xTaskNotifyFromISR
+            (
+                m_taskToNotify,
+                reinterpret_cast<uint32_t>(bufferOne.data()),
+                eSetValueWithOverwrite,
+                &xHigherPriorityTaskWoken
+            );
+        } else {
+            xTaskNotifyFromISR
+            (
+                m_taskToNotify,
+                reinterpret_cast<uint32_t>(bufferTwo.data()),
+                eSetValueWithOverwrite,
+                &xHigherPriorityTaskWoken
+            );
+        }
+
+        m_DMA->HIFCR |= CLEAR_TCF;
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    }
+
 }

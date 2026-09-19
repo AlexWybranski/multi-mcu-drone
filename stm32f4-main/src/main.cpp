@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <array>
+#include <cstring>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -102,7 +103,7 @@ int main() {
         receiverTask,
         "receiverTask",
         256,
-        &dma2,
+        NULL,
         5,
         receiverTaskStack,
         &receiverTaskBuffer);
@@ -127,6 +128,7 @@ int main() {
 }
 
 void imuTask(void* pvParameters) {
+    static_cast<void>(pvParameters);
 
     while(1) {
 
@@ -134,9 +136,28 @@ void imuTask(void* pvParameters) {
 }
 
 void receiverTask(void* pvParameters) {
+    static_cast<void>(pvParameters);
+
+    std::array<uint8_t, DMA_SETUP::NDTR_VAL> rawPacket;
+    uint32_t rawDataAddress{0};
+    uint8_t* rawDataPtr{nullptr};
 
     while(1) {
-        
+        if (xTaskNotifyWait(
+            0,
+            0xFFFFFFFF,
+            &rawDataAddress,
+            pdMS_TO_TICKS(1000)
+        ) == pdPASS) {
+            rawDataPtr = reinterpret_cast<uint8_t*>(rawDataAddress);
+            std::memcpy(rawPacket.data(), rawDataPtr, DMA_SETUP::NDTR_VAL);
+
+            //rest of logic
+
+            rawDataAddress = 0U;
+        } else {
+            xTaskNotifyGive(failsafeTaskHandle);
+        }
     }
 }
 
@@ -148,6 +169,8 @@ void enginesTask(void* pvParameters) {
 }
 
 void failsafeTask(void* pvParameters) {
+    static_cast<void>(pvParameters);
+
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     //ensure that only failsafe task is able to operate engines
