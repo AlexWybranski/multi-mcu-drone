@@ -31,6 +31,7 @@ void SpiHandle::init(uint32_t CS_PIN_NUM) {
 
     GPIO_ptr->setPinMode(GpioHandle::Mode::output, CS_PIN_NUM);
     GPIO_ptr->setPinOutputSpeed(GpioHandle::Speed::medium, CS_PIN_NUM);
+    GPIO_ptr->setPinPullupPulldown(GpioHandle::Pull::pullup, CS_PIN_NUM);
     GPIO_ptr->setPinState(true, CS_PIN_NUM);
 
     m_SPI->CR1 |= (CR1_SPE_VAL << CR1_SPE_SHIFT);

@@ -19,16 +19,24 @@ class UsartHandle {
         USART_regs* const m_USART; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
-        explicit UsartHandle(uint32_t baseAddr) : m_USART(reinterpret_cast<USART_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        explicit UsartHandle(uint32_t baseAddr) : m_USART(reinterpret_cast<USART_regs*>(baseAddr)) {
+            instance = this;
+        } // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         ~UsartHandle() = default;
         UsartHandle(const UsartHandle& other) = delete;
         UsartHandle& operator=(const UsartHandle& other) = delete;
         UsartHandle(UsartHandle&& other) = delete;
         UsartHandle& operator=(UsartHandle&& other) = delete;
 
+        static UsartHandle* instance;
+
         constexpr uint32_t calculateBRRregValue();
 
+        volatile uint32_t* getDataRegAddr();
+
         void init();
+
+        void handleIRQ();
 };
 
 #endif

@@ -13,7 +13,7 @@ namespace DMA_SETUP {
     constexpr uint32_t CHANNEL_RESET = ~(0b111U << 25U);
     constexpr uint32_t CHANNEL4_SET = (0b100U << 25U);
 
-    constexpr uint32_t DOUBLE_BUFFER_MODE = (0b1U << 19U);
+    constexpr uint32_t DOUBLE_BUFFER_MODE = (0b1U << 18U);
 
     constexpr uint32_t MSIZE_ONE_BYTE = ~(0b11U << 13U);
     constexpr uint32_t PSIZE_ONE_BYTE = ~(0b11U << 11U);
@@ -124,7 +124,7 @@ class DmaHandle {
             - Double buffer
             - 1 byte word
         */
-        void init(uint32_t* peripheral_reg_addr, TaskHandle_t taskToNofify);
+        void init(volatile uint32_t* peripheral_reg_addr, TaskHandle_t taskToNofify);
 
         void handleIRQ();
 };

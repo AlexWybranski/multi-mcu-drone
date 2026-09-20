@@ -9,6 +9,8 @@ namespace USART_SETUP {
     constexpr uint32_t CR3_DMAR = (0b1U << 6U);
 }
 
+UsartHandle* UsartHandle::instance = nullptr;
+
 /*
     This function ignores heavy math from F4 Reference manual, and only uses ready DIV_Mantissa and DIV_Fraction values
 
@@ -38,6 +40,17 @@ void UsartHandle::init() {
     m_USART->CR3 |= CR3_DMAR;
 
     m_USART->BRR = calculateBRRregValue();
-
+    
     m_USART->CR1 |= CR1_UE;
+}
+
+volatile uint32_t* UsartHandle::getDataRegAddr() {
+    return &m_USART->DR;
+}
+
+void UsartHandle::handleIRQ() {
+    [[maybe_unused]]uint32_t dummySR = m_USART->SR;
+    [[maybe_unused]]uint32_t dummyDR = m_USART->DR;
+
+    return;
 }

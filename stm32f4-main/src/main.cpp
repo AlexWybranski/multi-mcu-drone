@@ -41,6 +41,10 @@ extern "C" {
     void SPI2_IRQHandler() {
         SpiHandle::instance->handleIRQ();
     }
+
+    void USART1_IRQHandler() {
+        UsartHandle::instance->handleIRQ();
+    }
 } //NOLINTEND
 
 void imuTask(void* pvParameters);
@@ -72,6 +76,8 @@ int main() {
     nvic.setIrqPriority(NVIC_IRQs::SPI2_IRQ, NVIC_IRQs::SPI2_IRQ_Priority);
     nvic.enableIRQ(NVIC_IRQs::DMA2_Stream5_IRQ);
     nvic.setIrqPriority(NVIC_IRQs::DMA2_Stream5_IRQ, NVIC_IRQs::DMA2_Stream5_IRQ_Priority);
+    nvic.enableIRQ(NVIC_IRQs::USART1_IRQ);
+    nvic.setIrqPriority(NVIC_IRQs::USART1_IRQ, NVIC_IRQs::USART1_IRQ_Priority);
 
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOAEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOBEN);
@@ -86,11 +92,46 @@ int main() {
     static GpioHandle gpioA(PeripheralBaseAddr::GPIOA_BASEADDR);
     static GpioHandle gpioB(PeripheralBaseAddr::GPIOB_BASEADDR);
 
-    static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
+    gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH1);
+    gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH2);
+    gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH3);
+    gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH4);
+    gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH1);
+    gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH2);
+    gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH3);
+    gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH4);
+
+    gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::USART1_TX);
+    gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::USART1_RX);
+    gpioB.setPinAlternateFunction(GpioHandle::Func::AF07, GPIOB_PINS::USART1_TX);
+    gpioB.setPinAlternateFunction(GpioHandle::Func::AF07, GPIOB_PINS::USART1_RX);
+    gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::USART1_RX);
+    gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::USART1_TX);
+    gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::USART1_RX);
+
+    gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::SPI2_SCK);
+    gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::SPI2_MISO);
+    gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::SPI2_MOSI);
+    gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::SPI2_SCK);
+    gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::SPI2_MISO);
+    gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::SPI2_MOSI);
+    gpioB.setPinAlternateFunction(GpioHandle::Func::AF05, GPIOB_PINS::SPI2_SCK);
+    gpioB.setPinAlternateFunction(GpioHandle::Func::AF05, GPIOB_PINS::SPI2_MISO);
+    gpioB.setPinAlternateFunction(GpioHandle::Func::AF05, GPIOB_PINS::SPI2_MOSI);
+    gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_SCK);
+    gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_MISO);
+    gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_MOSI);
 
     static SpiHandle spi2(PeripheralBaseAddr::SPI2_BASEADDR, &gpioB);
 
+    spi2.init(GPIOB_PINS::SPI2_SCS);
+
     static DmaHandle dma2(PeripheralBaseAddr::DMA2_BASEADDR);
+    static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
+    
+    dma2.init(uart1.getDataRegAddr(), receiverTaskHandle);
+    
+    uart1.init();
 
     static Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
 
@@ -173,6 +214,7 @@ void receiverTask(void* pvParameters) {
             crc = calculateCRC(controlData);
 
             if (crc == receivedPacket.crcValue) {
+                badPacketsCounter = 0;
                 //update global control
             } else {
                 badPacketsCounter++;
