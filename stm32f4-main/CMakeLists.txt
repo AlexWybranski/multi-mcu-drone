@@ -15,6 +15,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_C_FLAGS "-mthumb -mfloat-abi=hard -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -Wall -Wextra -std=gnu11 -O0 -g")
 set(CMAKE_CXX_FLAGS "-mthumb -mfloat-abi=hard -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -fno-exceptions -fno-rtti -fno-threadsafe-statics -std=gnu++23 -O0 -g")
 
+include_directories("${CMAKE_SOURCE_DIR}/../shared")
+
 file(GLOB_RECURSE CPPSRCS "src/*.cpp")
 file(GLOB_RECURSE CSRCS "src/*.c" "startup/*.c" "freertos/source/*.c" "freertos/ARM_CM4F/port.c")
 
@@ -37,7 +39,7 @@ target_include_directories(${PROJECT_NAME}.elf PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/freertos/include
     ${CMAKE_CURRENT_SOURCE_DIR}/freertos/source/ARM_CM4F
-    ../$(CMAKE_CURRENT_SOURCE_DIR)/shared/packet.hpp
+    $(CMAKE_CURRENT_SOURCE_DIR)/../shared
 )
 
 add_custom_target(load

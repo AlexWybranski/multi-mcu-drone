@@ -13,6 +13,10 @@
 #include "spi.hpp"
 #include "gpio.hpp"
 #include "nvic.hpp"
+#include "crc.hpp"
+
+#include "dronePacket.hpp"
+#include "control.hpp"
 
 // extern "C" block excluded from linter, due to freertos functions breaking the rules
 //NOLINTBEGIN (cppcoreguidelines-avoid-magic-numbers, cppcoreguidelines-pro-bounds-array-to-pointer-decay,hicpp-no-array-decay)
@@ -90,57 +94,69 @@ int main() {
 
     static Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
 
-    imuTaskHandle = xTaskCreateStatic(
+    imuTaskHandle = xTaskCreateStatic
+    (
         imuTask,
         "imuTask",
         256,
         NULL,
         5,
         imuTaskStack,
-        &imuTaskBuffer);
+        &imuTaskBuffer
+    );
 
-    receiverTaskHandle = xTaskCreateStatic(
+    receiverTaskHandle = xTaskCreateStatic
+    (
         receiverTask,
         "receiverTask",
         256,
         NULL,
         5,
         receiverTaskStack,
-        &receiverTaskBuffer);
+        &receiverTaskBuffer
+    );
 
-    enginesTaskHandle = xTaskCreateStatic(
+    enginesTaskHandle = xTaskCreateStatic
+    (
         enginesTask,
         "enginesTask",
         256,
         NULL,
         5,
         enginesTaskStack,
-        &enginesTaskBuffer);
+        &enginesTaskBuffer
+    );
 
-    failsafeTaskHandle = xTaskCreateStatic(
+    failsafeTaskHandle = xTaskCreateStatic
+    (
         failsafeTask,
         "failsafeTask",
         256,
         NULL,
         5,
         failsafeTaskStack,
-        &failsafeTaskBuffer);
+        &failsafeTaskBuffer
+    );
 }
 
 void imuTask(void* pvParameters) {
     static_cast<void>(pvParameters);
 
     while(1) {
-
+        vTaskDelay(100);
     }
 }
 
 void receiverTask(void* pvParameters) {
     static_cast<void>(pvParameters);
 
-    std::array<uint8_t, DMA_SETUP::NDTR_VAL> rawPacket;
     uint32_t rawDataAddress{0};
     uint8_t* rawDataPtr{nullptr};
+    
+    uint32_t controlData;
+    DroneControlPacket receivedPacket{};
+    uint32_t crc{0};
+    uint8_t badPacketsCounter{0};
 
     while(1) {
         if (xTaskNotifyWait(
@@ -150,10 +166,22 @@ void receiverTask(void* pvParameters) {
             pdMS_TO_TICKS(1000)
         ) == pdPASS) {
             rawDataPtr = reinterpret_cast<uint8_t*>(rawDataAddress);
-            std::memcpy(rawPacket.data(), rawDataPtr, DMA_SETUP::NDTR_VAL);
+            std::memcpy(&receivedPacket, rawDataPtr, DMA_SETUP::NDTR_VAL);
 
-            //rest of logic
+            std::memcpy(&controlData, &receivedPacket, packetStructure::DATA_LENGTH);
 
+            crc = calculateCRC(controlData);
+
+            if (crc == receivedPacket.crcValue) {
+                //update global control
+            } else {
+                badPacketsCounter++;
+                if (badPacketsCounter > 5) {
+                    xTaskNotifyGive(failsafeTaskHandle);
+                }
+            }
+
+            crc = 0U;
             rawDataAddress = 0U;
         } else {
             xTaskNotifyGive(failsafeTaskHandle);
@@ -162,9 +190,10 @@ void receiverTask(void* pvParameters) {
 }
 
 void enginesTask(void* pvParameters) {
+    static_cast<void>(pvParameters);
 
     while(1) {
-        
+        vTaskDelay(100);
     }
 }
 
