@@ -23,7 +23,15 @@ void RemoteControl::calculateCRC(DroneControlPacket* dronePacket) {
 
     std::memcpy(buffer.data(), dronePacket, PACKET_DATA_SIZE);
 
-    dronePacket->crcValue = esp_rom_crc32_le(N_CRC_CALC_VALUE, buffer.data(), PACKET_DATA_SIZE);
+    std::array<uint8_t, PACKET_DATA_SIZE> crcBuff;
+
+    int countDown = PACKET_DATA_SIZE;
+    for (int i{0}; i < PACKET_DATA_SIZE; ++i) {
+        countDown--;
+        crcBuff[i] = buffer[countDown];
+    }
+
+    dronePacket->crcValue = (esp_rom_crc32_be(N_CRC_CALC_VALUE, crcBuff.data(), PACKET_DATA_SIZE) ^ 0xFFFFFFFF);
 }
 
 DroneControlPacket RemoteControl::getAndClearPacket() {

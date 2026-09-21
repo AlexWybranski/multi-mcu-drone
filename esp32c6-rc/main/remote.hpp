@@ -22,7 +22,7 @@ namespace ConstantValues {
     constexpr int32_t NEUTRAL_AXIS_VAL = 128U;
 
     constexpr size_t MAC_LENGTH = 6U; 
-    constexpr std::array<uint8_t, MAC_LENGTH> RECEIVER_MAC = {0x9C, 0x13, 0x9E, 0xB5, 0x19, 0xC0};
+    constexpr std::array<uint8_t, MAC_LENGTH> RECEIVER_MAC = {0x10,0xBD,0xA3,0x90,0xE2,0xB8};
 
     constexpr uint32_t PACKET_DATA_SIZE = 4U;
     constexpr size_t PACKET_SIZE = sizeof(DroneControlPacket);
@@ -34,7 +34,7 @@ namespace ConstantValues {
 
     constexpr std::array<uint8_t, PACKET_DATA_SIZE> NEUTRAL_DATA{N_THROTTLE, N_ROLL, N_PITCH, N_BUTTON_REG};
 
-    constexpr uint32_t N_CRC_CALC_VALUE = 0xFFFFFFFFU;
+    constexpr uint32_t N_CRC_CALC_VALUE = 0x0U;
 
     constexpr uint8_t RST_BUTTONS = ~(ControlRegister::CAM_DOWN | ControlRegister::CAM_UP | ControlRegister::YAW_LEFT | ControlRegister::YAW_RIGHT | ControlRegister::START_STOP_ENGINE);
 

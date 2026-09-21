@@ -5,7 +5,7 @@ namespace nvic_constants {
     constexpr uint32_t IPR_BASE_OFFSET = 0x400;
     constexpr uint32_t ISER_IPR_ADDITIONAL_OFFSET = 0x04;
     constexpr uint32_t ISER_IRQs_PER_REG = 32U;
-    constexpr uint32_t IPR_IRQs_PER_REG = 32U;
+    constexpr uint32_t IPR_IRQs_PER_REG = 4U;
     constexpr uint32_t IPR_BITS_PER_IRQ = 8U;
 
     constexpr uint32_t IRQ_MAX_NUMBER = 85U;

@@ -2,9 +2,9 @@
 
 class Nvic {
     private:
-        volatile uint32_t* m_NVIC;
+        uint32_t m_NVIC;
     public:
-        explicit Nvic(uint32_t baseAddr) : m_NVIC(reinterpret_cast<volatile uint32_t*>(baseAddr)) {}
+        explicit Nvic(uint32_t baseAddr) : m_NVIC(baseAddr) {}
         ~Nvic() = default;
         Nvic(const Nvic& other) = delete;
         Nvic& operator=(const Nvic& other) = delete;

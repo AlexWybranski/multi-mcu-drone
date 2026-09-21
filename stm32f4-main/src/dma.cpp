@@ -4,6 +4,8 @@
 
 DmaHandle* DmaHandle::instance = nullptr;
 
+// In this driver reinterpret_cast is needed to change address to uint32_t number in order to write value to register or to send it via FreeRTOS Notification register
+// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 /*
     @param peripheral_reg_addr - register from which dma will take data
     @param taskToNotify - task that will be notified and get pointer to buffer to read data from
@@ -69,7 +71,9 @@ void DmaHandle::handleIRQ() {
         }
 
         m_DMA->HIFCR |= CLEAR_TCF;
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
 
+        //FreeRTOS macro, NOLINT used - non-user-code
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken); //NOLINT(cppcoreguidelines-avoid-do-while,cppcoreguidelines-pro-type-cstyle-cast,hicpp-no-assembler)
+    }
+// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 }

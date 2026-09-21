@@ -52,10 +52,10 @@ void receiverTask(void* pvParameters);
 void enginesTask(void* pvParameters);
 void failsafeTask(void* pvParameters);
 
-StackType_t imuTaskStack[256];
-StackType_t receiverTaskStack[256];
-StackType_t enginesTaskStack[256];
-StackType_t failsafeTaskStack[256];
+StackType_t imuTaskStack[512];
+StackType_t receiverTaskStack[512];
+StackType_t enginesTaskStack[512];
+StackType_t failsafeTaskStack[512];
 
 StaticTask_t imuTaskBuffer;
 StaticTask_t receiverTaskBuffer;
@@ -129,55 +129,64 @@ int main() {
     static DmaHandle dma2(PeripheralBaseAddr::DMA2_BASEADDR);
     static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
     
-    dma2.init(uart1.getDataRegAddr(), receiverTaskHandle);
     
-    uart1.init();
-
     static Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
-
+    
     imuTaskHandle = xTaskCreateStatic
     (
         imuTask,
         "imuTask",
-        256,
+        512,
         NULL,
-        5,
+        3,
         imuTaskStack,
         &imuTaskBuffer
     );
-
+    
     receiverTaskHandle = xTaskCreateStatic
     (
         receiverTask,
         "receiverTask",
-        256,
+        512,
         NULL,
-        5,
+        4,
         receiverTaskStack,
         &receiverTaskBuffer
     );
-
+    
     enginesTaskHandle = xTaskCreateStatic
     (
         enginesTask,
         "enginesTask",
-        256,
+        512,
         NULL,
-        5,
+        2,
         enginesTaskStack,
         &enginesTaskBuffer
     );
-
+    
     failsafeTaskHandle = xTaskCreateStatic
     (
         failsafeTask,
         "failsafeTask",
-        256,
+        512,
         NULL,
         5,
         failsafeTaskStack,
         &failsafeTaskBuffer
     );
+
+    dma2.init(uart1.getDataRegAddr(), receiverTaskHandle);
+    
+    uart1.init();
+    
+    vTaskStartScheduler();
+
+    while (1) {
+    
+    }
+
+    return 0;;
 }
 
 void imuTask(void* pvParameters) {
@@ -198,6 +207,7 @@ void receiverTask(void* pvParameters) {
     DroneControlPacket receivedPacket{};
     uint32_t crc{0};
     uint8_t badPacketsCounter{0};
+    bool isInitialized{false};
 
     while(1) {
         if (xTaskNotifyWait(
@@ -214,6 +224,9 @@ void receiverTask(void* pvParameters) {
             crc = calculateCRC(controlData);
 
             if (crc == receivedPacket.crcValue) {
+                if (!isInitialized) {
+                    isInitialized = true;
+                }
                 badPacketsCounter = 0;
                 //update global control
             } else {
@@ -226,7 +239,9 @@ void receiverTask(void* pvParameters) {
             crc = 0U;
             rawDataAddress = 0U;
         } else {
-            xTaskNotifyGive(failsafeTaskHandle);
+            if (isInitialized) {
+                xTaskNotifyGive(failsafeTaskHandle);
+            }
         }
     }
 }
@@ -245,10 +260,10 @@ void failsafeTask(void* pvParameters) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     //ensure that only failsafe task is able to operate engines
-    vTaskDelete(enginesTaskHandle);
-    vTaskDelete(receiverTaskHandle);
+    //vTaskDelete(enginesTaskHandle);
+    //vTaskDelete(receiverTaskHandle);
 
     while(1) {
-        
+        vTaskDelay(100);
     }
 }

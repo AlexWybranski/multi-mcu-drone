@@ -43,7 +43,7 @@ target_include_directories(${PROJECT_NAME}.elf PRIVATE
 )
 
 add_custom_target(load
-    COMMAND openocd -f /usr/share/openocd/scripts/board/st_nucleo_f4.cfg
+    COMMAND openocd -f interface/stlink.cfg -f target/stm32f4x.cfg
     DEPENDS ${PROJECT_NAME}.elf
     COMMENT "Loading main.elf to board via OpenOCD..."    
 )

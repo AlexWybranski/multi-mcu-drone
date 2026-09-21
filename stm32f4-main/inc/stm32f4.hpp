@@ -9,7 +9,7 @@ namespace PeripheralBaseAddr {
     constexpr uint32_t USART1_BASEADDR = 0x40011000U;
     constexpr uint32_t DMA2_BASEADDR = 0x40026400U;
     constexpr uint32_t CRC_BASEADDR = 0x40023000U;
-    constexpr uint32_t NVIC_BASEADDR = 0xE000E100U;
+    constexpr uint32_t NVIC_BASEADDR = 0xE000E000U;
 }
 
 namespace NVIC_IRQs {

@@ -9,7 +9,7 @@ namespace PWM_SETUP {
     constexpr uint32_t PWM_MIN_DUTY = 250U;
     constexpr uint32_t PWM_MAX_DUTY = 700U;
     constexpr uint32_t PWM_STEP = 10U;
-    constexpr uint32_t PWM_OUT_PIN = 42U;
+    constexpr uint32_t PWM_OUT_PIN = 1U;
     constexpr uint32_t PWM_HZ = 50U;
     constexpr uint32_t PWM_HPOINT = 0U;
 }

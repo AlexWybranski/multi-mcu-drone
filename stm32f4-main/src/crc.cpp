@@ -7,8 +7,9 @@ extern "C" {
 }
 
 uint32_t calculateCRC(uint32_t value) {
-    auto* const l_CRC = reinterpret_cast<CRC_regs*>(PeripheralBaseAddr::CRC_BASEADDR);
-    uint32_t calculatedCRC;
+    // Hardware register mapping, NOLINT used
+    auto* const l_CRC = reinterpret_cast<CRC_regs*>(PeripheralBaseAddr::CRC_BASEADDR); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    uint32_t calculatedCRC = 0U;
 
     l_CRC->DR = value;
 

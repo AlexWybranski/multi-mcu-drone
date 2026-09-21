@@ -10,6 +10,8 @@ extern "C" {
 }
 
 int app_main(void) {
+    esp_log_level_set("*", ESP_LOG_NONE);
+
     constexpr uint32_t DELAY_TO_FREE_CPU = 150U;
 
     Receiver::initUart();

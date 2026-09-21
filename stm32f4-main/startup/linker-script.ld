@@ -12,7 +12,7 @@ SECTIONS
 {
     .text :
     {
-        KEEP(*(.vector))
+        KEEP(*(.isr_vector))
         *(.text)
         *(.text.*)
         *(.init)

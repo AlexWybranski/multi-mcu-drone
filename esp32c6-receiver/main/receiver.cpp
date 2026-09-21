@@ -61,8 +61,6 @@ void Receiver::onReceive(const esp_now_recv_info_t* info, const uint8_t* data, i
         ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty));
 
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
-
-        esp_rom_printf("[RCV] Throttle: %u | Pitch: %u | Roll: %u | Buttons: %u | CRC: %X\n", Receiver::m_packet.throttle, Receiver::m_packet.pitch, Receiver::m_packet.roll, Receiver::m_packet.buttonControlReg, Receiver::m_packet.crcValue);
     } else {
         //DROP PACKET
     }
@@ -72,7 +70,7 @@ void Receiver::initUart() {
     constexpr int uart_buffer_tx_size = 256;
     constexpr int uart_buffer_rx_size = 256;
     constexpr int UART_BAUD_RATE = 115200;
-    
+
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_1, uart_buffer_rx_size, uart_buffer_tx_size, 0, nullptr, 0));
 
     uart_config_t uart_config = {};
@@ -85,7 +83,7 @@ void Receiver::initUart() {
 
     ESP_ERROR_CHECK(uart_param_config(m_uart_num, &uart_config));
 
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, 17, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, 16, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 }
 
 void Receiver::initPwm() {
