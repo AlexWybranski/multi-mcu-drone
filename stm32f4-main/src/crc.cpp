@@ -2,7 +2,7 @@
 #include "stm32f4.hpp"
 
 extern "C" {
-    #include "FreeRTOS.h"
+    #include "FreeRTOS.h" // IWYU pragma: keep
     #include "task.h"
 }
 

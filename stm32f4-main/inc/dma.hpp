@@ -3,8 +3,10 @@
 #include <cstdint>
 #include <array>
 
+#include "dronePacket.hpp"
+
 extern "C" {
-    #include "FreeRTOS.h"
+    #include "FreeRTOS.h" // IWYU pragma: keep
     #include "task.h"
 }
 
@@ -30,7 +32,7 @@ namespace DMA_SETUP {
     constexpr uint32_t ENABLE = (0b1U << 0U);
 
     //value for SxNDTR register (what is length of one transfer (according to MSIZE value))
-    constexpr uint32_t NDTR_VAL = 8U;
+    constexpr uint32_t NDTR_VAL = sizeof(DroneControlPacket);
 
     //HIFCR
     constexpr uint32_t CLEAR_TCF = (0b1U << 11U); //CTCIFx bit

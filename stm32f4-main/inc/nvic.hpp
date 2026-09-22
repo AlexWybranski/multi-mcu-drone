@@ -1,3 +1,6 @@
+#ifndef NVIC_HPP
+#define NVIC_HPP
+
 #include <cstdint>
 
 class Nvic {
@@ -15,3 +18,5 @@ class Nvic {
 
         void setIrqPriority(uint32_t irqNum, uint8_t priority);
 };
+
+#endif

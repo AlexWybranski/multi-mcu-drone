@@ -1,3 +1,6 @@
+#ifndef STM_F4_HPP
+#define STM_F4_HPP
+
 #include <cstdint>
 
 namespace PeripheralBaseAddr {
@@ -53,3 +56,5 @@ namespace GPIOB_PINS {
     constexpr uint32_t SPI2_MISO = 14U;
     constexpr uint32_t SPI2_MOSI = 15U;
 }
+
+#endif
