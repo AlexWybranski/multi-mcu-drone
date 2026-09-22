@@ -17,6 +17,8 @@ class UsartHandle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         USART_regs* const m_USART; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
+        [[nodiscard("returned value must be assigned to variable")]]static consteval uint32_t calculateBRRregValue();
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
         explicit UsartHandle(uint32_t baseAddr) : m_USART(reinterpret_cast<USART_regs*>(baseAddr)) {
@@ -30,7 +32,6 @@ class UsartHandle {
 
         static UsartHandle* instance;
 
-        constexpr uint32_t calculateBRRregValue();
 
         volatile uint32_t* getDataRegAddr();
 

@@ -16,7 +16,7 @@ UsartHandle* UsartHandle::instance = nullptr;
 
     Calculated values are for 115200 Baud rate with 48 MHz clock on APB2 bus
 */
-constexpr uint32_t UsartHandle::calculateBRRregValue() {
+consteval uint32_t UsartHandle::calculateBRRregValue() {
     uint32_t val{0};
 
     const uint32_t mantissa = 26U;
@@ -39,7 +39,9 @@ void UsartHandle::init() {
     m_USART->CR3 = REG_RESET_VAL;
     m_USART->CR3 |= CR3_DMAR;
 
-    m_USART->BRR = calculateBRRregValue();
+    constexpr uint32_t brrValue = calculateBRRregValue();
+
+    m_USART->BRR = brrValue;
     
     m_USART->CR1 |= CR1_UE;
 }
