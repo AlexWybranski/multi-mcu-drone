@@ -74,9 +74,7 @@ class SpiHandle {
 
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
-        explicit SpiHandle(uint32_t baseAddr, GpioHandle* GPIO_PORT_ptr) : m_SPI(reinterpret_cast<SPI_regs*>(baseAddr)), GPIO_ptr(GPIO_PORT_ptr) { // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            instance = this;
-        }
+        explicit SpiHandle(uint32_t baseAddr, GpioHandle* GPIO_PORT_ptr) : m_SPI(reinterpret_cast<SPI_regs*>(baseAddr)), GPIO_ptr(GPIO_PORT_ptr) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         ~SpiHandle() = default;
         SpiHandle(const SpiHandle& other) = delete;
         SpiHandle& operator=(const SpiHandle& other) = delete;
@@ -104,6 +102,8 @@ class SpiHandle {
         void read_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly);
 
         void setCsHigh();
+
+        volatile uint32_t* getDataRegAddr();
 
         void handleIRQ();
 };

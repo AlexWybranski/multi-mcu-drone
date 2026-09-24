@@ -9,8 +9,6 @@ namespace USART_SETUP {
     constexpr uint32_t CR3_DMAR = (0b1U << 6U);
 }
 
-UsartHandle* UsartHandle::instance = nullptr;
-
 /*
     This function ignores heavy math from F4 Reference manual, and only uses ready DIV_Mantissa and DIV_Fraction values
 

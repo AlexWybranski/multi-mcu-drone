@@ -59,6 +59,10 @@ void SpiHandle::setCsHigh() {
     GPIO_ptr->setPinState(true, m_CS_PIN);
 }
 
+volatile uint32_t* SpiHandle::getDataRegAddr() {
+    return &m_SPI->DR;
+}
+
 void SpiHandle::handleIRQ() {
     using namespace SPI_SETUP;
 

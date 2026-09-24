@@ -11,6 +11,7 @@ namespace PeripheralBaseAddr {
     constexpr uint32_t SPI2_BASEADDR = 0x40003800U;
     constexpr uint32_t USART1_BASEADDR = 0x40011000U;
     constexpr uint32_t DMA2_BASEADDR = 0x40026400U;
+    constexpr uint32_t DMA1_BASEADDR = 0x40026000U;
     constexpr uint32_t CRC_BASEADDR = 0x40023000U;
     constexpr uint32_t NVIC_BASEADDR = 0xE000E000U;
 }
@@ -22,6 +23,8 @@ namespace NVIC_IRQs {
     constexpr uint8_t SPI2_IRQ_Priority = 7U;
     constexpr uint32_t USART1_IRQ = 37U;
     constexpr uint32_t USART1_IRQ_Priority = 5U;
+
+    constexpr std::size_t MAX_REGISTERED_IRQs = 8U;
 }
 
 namespace AHB1_PERIPHERAL_BITS {
