@@ -1,7 +1,5 @@
 #include "spi.hpp"
 
-SpiHandle* SpiHandle::instance = nullptr;
-
 void SpiHandle::init(uint32_t CS_PIN_NUM) {
     using namespace SPI_SETUP;
     
@@ -37,22 +35,48 @@ void SpiHandle::init(uint32_t CS_PIN_NUM) {
     m_SPI->CR1 |= (CR1_SPE_VAL << CR1_SPE_SHIFT);
 }
 
-void SpiHandle::read_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly) {
+void SpiHandle::DMAread_write() {
     using namespace SPI_SETUP;
 
     if (GPIO_ptr == nullptr || m_CS_PIN == 0) {
         return;
     }
 
-    m_rxBuff = rxBuff;
-    m_txBuff = txBuff;
-    m_size = size * 2U;
-    m_writeOnly = writeOnly;
-                            
-    m_SPI->CR2 |= CR2_RXNEIE;
-    m_SPI->CR2 |= CR2_TXEIE;
+    GPIO_ptr->setPinState(false, m_CS_PIN);
+
+    //write buffer and wait
+}
+
+void SpiHandle::POLLread_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly) {
+    using namespace SPI_SETUP;
+
+    uint32_t txIndex = 0;
+    uint32_t rxIndex = 0;
+
+    if (GPIO_ptr == nullptr || m_CS_PIN == 0) {
+        return;
+    }
+
+    m_SPI->CR1 |= (CR1_SPE_VAL << CR1_SPE_SHIFT);
 
     GPIO_ptr->setPinState(false, m_CS_PIN);
+
+    while (txIndex < size) {
+        if ((m_SPI->SR & SR_RXNE) && !writeOnly) {
+            rxBuff[rxIndex] = static_cast<uint8_t>(m_SPI->DR);
+            rxIndex++;
+        }
+        if (m_SPI->SR & SR_TXE) {
+            m_SPI->DR = static_cast<uint32_t>(txBuff[txIndex]);
+            txIndex++;
+        }
+    }
+
+    while (m_SPI->SR & SR_BSY) {}
+
+    m_SPI->CR1 &= ~(CR1_SPE_VAL << CR1_SPE_SHIFT);
+
+    GPIO_ptr->setPinState(true, m_CS_PIN);
 }
 
 void SpiHandle::setCsHigh() {
@@ -66,52 +90,10 @@ volatile uint32_t* SpiHandle::getDataRegAddr() {
 void SpiHandle::handleIRQ() {
     using namespace SPI_SETUP;
 
-    if((m_SPI->SR & SR_RXNE) && (m_SPI->CR2 & CR2_RXNEIE)) {
-        if(!m_writeOnly && (m_byteCounter % 2 != 0)) {
-            m_rxBuff[m_rxIndex] = static_cast<uint8_t>(m_SPI->DR);
-            std::size_t helper = m_rxIndex;
-            std::size_t byteHelper = m_byteCounter;
-            helper++;
-            byteHelper++;
-            m_rxIndex = helper;
-            m_byteCounter = byteHelper;
-        } else {
-            [[maybe_unused]]uint32_t dummy = m_SPI->DR;
-            std::size_t byteHelper = m_byteCounter;
-            byteHelper++;
-            m_byteCounter = byteHelper;
-        }
-        if(m_byteCounter >= m_size) {
-            m_SPI->CR2 &= ~CR2_RXNEIE;
-            m_SPI->CR2 &= ~CR2_TXEIE;
-            m_rxIndex = 0;
-            m_txIndex = 0;
-            m_byteCounter = 0;
-            SpiHandle::setCsHigh();
-        }
-    }
-
-    if((m_SPI->SR & SR_TXE) && (m_SPI->CR2 & CR2_TXEIE)) {
-        if (!m_writeOnly && (m_byteCounter % 2 != 0)) {
-            m_SPI->DR = m_dummyByte;
-        } else {
-            m_SPI->DR = m_txBuff[m_txIndex];
-            std::size_t helper = m_txIndex;
-            helper++;
-            m_txIndex = helper;
-        }
-    }
-
     if((m_SPI->SR & SR_OVR) && (m_SPI->CR2 & CR2_ERRIE)) {
         [[maybe_unused]]uint32_t dummy = m_SPI->DR;
         [[maybe_unused]]uint32_t status = m_SPI->SR;
 
-        m_SPI->CR2 &= ~CR2_RXNEIE;
-        m_SPI->CR2 &= ~CR2_TXEIE;
-
-        m_rxIndex = 0;
-        m_txIndex = 0;
-        m_byteCounter = 0;
-        SpiHandle::setCsHigh();
+        GPIO_ptr->setPinState(true, m_CS_PIN);
     }
 }

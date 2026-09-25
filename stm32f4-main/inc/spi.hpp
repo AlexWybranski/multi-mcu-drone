@@ -2,6 +2,11 @@
 #define SPI_HPP
 #include <cstdint>
 
+extern "C" {
+    #include "FreeRTOS.h" // IWYU pragma: keep
+    #include "task.h"
+}
+
 #include "gpio.hpp"
 
 namespace SPI_constants {
@@ -33,6 +38,7 @@ namespace SPI_SETUP {
     constexpr uint32_t CR2_ERRIE_VAL = 0b1U;
     constexpr uint32_t CR2_ERRIE_SHIFT = 5U;
 
+    constexpr uint32_t SR_BSY = (0b1U << 7U);
     constexpr uint32_t SR_OVR = (0b1U << 6U);
     constexpr uint32_t SR_TXE = (0b1U << 1U);
     constexpr uint32_t SR_RXNE = (0b1U << 0U);
@@ -63,13 +69,6 @@ class SpiHandle {
         GpioHandle* GPIO_ptr{nullptr};
         uint32_t m_CS_PIN{0};
 
-        uint8_t* m_txBuff{};
-        volatile std::size_t m_txIndex{0};
-        uint8_t* m_rxBuff{};
-        volatile std::size_t m_rxIndex{0};
-        std::size_t m_size{0};
-        volatile std::size_t m_byteCounter{0};
-        bool m_writeOnly{false};
         const uint32_t m_dummyByte = 0xFF;
 
     public:
@@ -99,7 +98,9 @@ class SpiHandle {
         */
         void init(uint32_t CS_PIN_NUM);
 
-        void read_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly);
+        void DMAread_write();
+
+        void POLLread_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly);
 
         void setCsHigh();
 

@@ -58,7 +58,7 @@ namespace DMA_SETUP {
 
     //value for SxNDTR register (what is length of one transfer (according to MSIZE value))
     constexpr uint32_t UART_NDTR_VAL = sizeof(DroneControlPacket);
-    constexpr uint32_t SPI_NDTR_VAL = 0U; //TEMP
+    constexpr uint32_t SPI_NDTR_VAL = 13U; //TEMP
 
     //HIFCR and LIFCR
     static constexpr std::array<uint32_t, 8> CLEAR_TCF {
@@ -269,6 +269,7 @@ class DmaStreamHandle {
                             &xHigherPriorityTaskWoken
                         );
                     }
+                    m_DMA_Stream->SCR |= ENABLE;
                 }
 
                 //FreeRTOS macro, NOLINT used - non-user-code

@@ -18,11 +18,32 @@ extern "C" {
 #include "init.hpp"
 #include "rtos_tasks.hpp"
 
+constexpr DmaStreamConfig dma1s3config {
+    DmaChannel::ch0,
+    DmaDirection::per_to_mem,
+    DmaPriority::medium,
+    DmaMode::double_buffer
+};
+
+constexpr DmaStreamConfig dma1s4config {
+    DmaChannel::ch0,
+    DmaDirection::mem_to_per,
+    DmaPriority::low,
+    DmaMode::single
+};
+
+constexpr DmaStreamConfig dma2s5config {
+    DmaChannel::ch0,
+    DmaDirection::per_to_mem,
+    DmaPriority::medium,
+    DmaMode::double_buffer
+};
+
 namespace IRQ_Config {
     using IRQFunc = void(*)(void);
 
-    inline DmaStreamHandle* dma1s3 = nullptr;
-    inline DmaStreamHandle* dma2s5 = nullptr;
+    inline DmaStreamHandle<PeripheralBaseAddr::DMA1_BASEADDR, DMA_SETUP::STREAM_3, dma1s3config, DMA_SETUP::SPI_NDTR_VAL>* dma1s3 = nullptr;
+    inline DmaStreamHandle<PeripheralBaseAddr::DMA2_BASEADDR, DMA_SETUP::STREAM_5, dma2s5config, DMA_SETUP::UART_NDTR_VAL>* dma2s5 = nullptr;
     inline UsartHandle* uart1 = nullptr;
 
     static constexpr std::array<IRQFunc, NVIC_IRQs::MAX_REGISTERED_IRQs> IRQ_table{
@@ -48,11 +69,11 @@ extern "C" {
         *pulIdleTaskStackSize = 128;
     }
 
-    void DMA1_Stream3_IRQHandler() {
+    void DMA1_Stream3_IRQHandler() { //SPI_RX
         IRQ_Config::IRQ_table[0]();
     }
 
-    void DMA2_Stream5_IRQHandler() {
+    void DMA2_Stream5_IRQHandler() { //UART_RX
         IRQ_Config::IRQ_table[1]();
     }
 
@@ -66,10 +87,10 @@ int main() {
     
     static GpioHandle gpioA(PeripheralBaseAddr::GPIOA_BASEADDR);
     static GpioHandle gpioB(PeripheralBaseAddr::GPIOB_BASEADDR);
-    
-    static DmaStreamHandle dma1s3(PeripheralBaseAddr::DMA1_BASEADDR, DMA_SETUP::STREAM_3);
-    static DmaStreamHandle dma1s4(PeripheralBaseAddr::DMA1_BASEADDR, DMA_SETUP::STREAM_4);
-    static DmaStreamHandle dma2s5(PeripheralBaseAddr::DMA2_BASEADDR, DMA_SETUP::STREAM_5);
+
+    static DmaStreamHandle<PeripheralBaseAddr::DMA1_BASEADDR, DMA_SETUP::STREAM_3, dma1s3config, DMA_SETUP::SPI_NDTR_VAL> dma1s3; //SPI_RX
+    static DmaStreamHandle<PeripheralBaseAddr::DMA1_BASEADDR, DMA_SETUP::STREAM_4, dma1s4config, DMA_SETUP::SPI_NDTR_VAL> dma1s4; //SPI_TX
+    static DmaStreamHandle<PeripheralBaseAddr::DMA2_BASEADDR, DMA_SETUP::STREAM_5, dma2s5config, DMA_SETUP::UART_NDTR_VAL> dma2s5; //UART_RX
 
     static SpiHandle spi2(PeripheralBaseAddr::SPI2_BASEADDR, &gpioB);
     static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
