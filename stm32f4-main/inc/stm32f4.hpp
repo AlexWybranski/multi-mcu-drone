@@ -17,10 +17,18 @@ namespace PeripheralBaseAddr {
 }
 
 namespace NVIC_IRQs {
+    constexpr uint32_t DMA1_Stream3_IRQ = 14U;
+    constexpr uint8_t DMA1_Stream3_IRQ_Priority = 6U;
+
+    constexpr uint32_t DMA1_Stream4_IRQ = 15U;
+    constexpr uint8_t DMA1_Stream4_IRQ_Priority = 6U;
+
     constexpr uint32_t DMA2_Stream5_IRQ = 68U;
     constexpr uint8_t DMA2_Stream5_IRQ_Priority = 6U;
+
     constexpr uint32_t SPI2_IRQ = 36U;
     constexpr uint8_t SPI2_IRQ_Priority = 7U;
+
     constexpr uint32_t USART1_IRQ = 37U;
     constexpr uint32_t USART1_IRQ_Priority = 5U;
 
@@ -29,6 +37,7 @@ namespace NVIC_IRQs {
 
 namespace AHB1_PERIPHERAL_BITS {
     constexpr uint32_t DMA2EN = 22U;
+    constexpr uint32_t DMA1EN = 21U;
     constexpr uint32_t CRCEN = 12U;
     constexpr uint32_t GPIOBEN = 1U;
     constexpr uint32_t GPIOAEN = 0U;

@@ -1,6 +1,7 @@
 #ifndef SPI_HPP
 #define SPI_HPP
 #include <cstdint>
+#include <concepts>
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -15,7 +16,7 @@ namespace SPI_constants {
 }
 
 namespace SPI_SETUP {
-    constexpr uint32_t CR1_BR_VAL = 0b010U; // pclk/8 -> 48 MHz / 8 = 6 MHz
+    constexpr uint32_t CR1_BR_VAL = 0b101U;/*0b010U;*/ // pclk/8 -> 48 MHz / 8 = 6 MHz
     constexpr uint32_t CR1_BR_SHIFT = 3U;
     constexpr uint32_t CR1_SSM_VAL = 0b1U;
     constexpr uint32_t CR1_SSM_SHIFT = 9U;
@@ -46,6 +47,8 @@ namespace SPI_SETUP {
     constexpr uint32_t CR2_TXEIE = (0b1U << 7U);
     constexpr uint32_t CR2_RXNEIE = (0b1U << 6U);
     constexpr uint32_t CR2_ERRIE = (0b1U << 5U);
+    constexpr uint32_t CR2_TXDMAEN = (0b1U << 1U);
+    constexpr uint32_t CR2_RXDMAEN = (0b1U << 0U);
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
@@ -61,6 +64,11 @@ struct SPI_regs {
     volatile uint32_t I2SPR;
 };
 
+template <typename DmaStreamHandle>
+concept CanStartTransfer = requires(DmaStreamHandle dma, uint8_t* buffSrc, size_t size) {
+    { dma.writeToBuffer(buffSrc, size) } -> std::same_as<void>;
+};
+
 class SpiHandle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
@@ -68,8 +76,6 @@ class SpiHandle {
 
         GpioHandle* GPIO_ptr{nullptr};
         uint32_t m_CS_PIN{0};
-
-        const uint32_t m_dummyByte = 0xFF;
 
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
@@ -98,9 +104,13 @@ class SpiHandle {
         */
         void init(uint32_t CS_PIN_NUM);
 
-        void DMAread_write();
+        void DMAstartTransfer();
 
-        void POLLread_write(uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly);
+        void DMAendTransfer();
+
+        void POLLread_write(const uint8_t* txBuff, uint8_t* rxBuff, std::size_t size, bool writeOnly);
+
+        void setCsLow();
 
         void setCsHigh();
 

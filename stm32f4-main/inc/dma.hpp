@@ -2,8 +2,10 @@
 #define DMA_HPP
 #include <cstdint>
 #include <array>
+#include <cstring>
 
 #include "dronePacket.hpp"
+#include "imu.hpp"
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -23,7 +25,7 @@ namespace DMA_SETUP {
 
     //SxCR
     constexpr uint32_t CHANNEL_RESET = ~(0b111U << 25U);
-    constexpr uint32_t CHANNEL0_SET = ~(0b111U << 25U);
+    constexpr uint32_t CHANNEL0_SET = (0b000U << 25U);
     constexpr uint32_t CHANNEL1_SET = (0b001U << 25U);
     constexpr uint32_t CHANNEL2_SET = (0b010U << 25U);
     constexpr uint32_t CHANNEL3_SET = (0b011U << 25U);
@@ -32,7 +34,7 @@ namespace DMA_SETUP {
     constexpr uint32_t CHANNEL6_SET = (0b110U << 25U);
     constexpr uint32_t CHANNEL7_SET = (0b111U << 25U);
 
-    constexpr uint32_t PRIORITY_LOW = ~(0b11U << 16U);
+    constexpr uint32_t PRIORITY_LOW = (0b00U << 16U);
     constexpr uint32_t PRIORITY_MEDIUM = (0b01U << 16U);
     constexpr uint32_t PRIORITY_HIGH = (0b10U << 16U);
     constexpr uint32_t PRIORITY_VERY_HIGH = (0b11U << 16U);
@@ -47,7 +49,7 @@ namespace DMA_SETUP {
     constexpr uint32_t PINC_ON = (0b1U << 9U);
     constexpr uint32_t PINC_OFF = ~(0b1U << 9U);
 
-    constexpr uint32_t PER_TO_MEM_DIRECTION = ~(0b11U << 6U);
+    constexpr uint32_t PER_TO_MEM_DIRECTION = (0b00U << 6U);
     constexpr uint32_t MEM_TO_PER_DIRECTION = (0b01U << 6U);
 
     constexpr uint32_t CURRENT_TARGET = (0b1U << 19U);
@@ -58,7 +60,7 @@ namespace DMA_SETUP {
 
     //value for SxNDTR register (what is length of one transfer (according to MSIZE value))
     constexpr uint32_t UART_NDTR_VAL = sizeof(DroneControlPacket);
-    constexpr uint32_t SPI_NDTR_VAL = 13U; //TEMP
+    constexpr uint32_t SPI_NDTR_VAL = 13U;
 
     //HIFCR and LIFCR
     static constexpr std::array<uint32_t, 8> CLEAR_TCF {
@@ -176,15 +178,13 @@ class DmaStreamHandle {
                 m_taskToNotify = taskToNotify;
             }
 
+            if (NDTR_VAL == LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH) {
+                std::memcpy(const_cast<uint8_t*>(bufferOne.data()), LSM6DS3::dataReadSequence.data(), NDTR_VAL);
+            }
+
             m_DMA_Stream->SCR &= ~ENABLE;
 
             while (m_DMA_Stream->SCR & ENABLE) {}
-            
-            if constexpr (streamNum >= 4) {
-                m_DMA->HIFCR = CLEAR_TCF[streamNum];
-            } else {
-                m_DMA->LIFCR = CLEAR_TCF[streamNum];
-            }
             
             uint32_t SxCR_MASK = 0U; 
 
@@ -193,10 +193,7 @@ class DmaStreamHandle {
                 static_cast<uint32_t>(config.direction) |
                 static_cast<uint32_t>(config.priority) |
                 //constant bits to all used configurations
-                PINC_OFF |
                 MINC_ON |
-                MSIZE_ONE_BYTE |
-                PSIZE_ONE_BYTE |
                 TCIE
             );
 
@@ -206,7 +203,7 @@ class DmaStreamHandle {
 
             m_DMA_Stream->SCR = SxCR_MASK;
             
-            m_DMA_Stream->SNDTR = NDTR_VAL;
+            m_DMA_Stream->SNDTR = static_cast<uint32_t>(NDTR_VAL);
             
             m_DMA_Stream->SPAR = std::bit_cast<uint32_t>(peripheral_reg_addr);
             
@@ -214,9 +211,51 @@ class DmaStreamHandle {
 
             if constexpr (config.mode == DmaMode::double_buffer) {
                 m_DMA_Stream->SM1AR = std::bit_cast<uint32_t>(DmaStreamHandle::bufferTwo.data());
+
+                m_DMA_Stream->SCR |= ENABLE;
             }
             
-            m_DMA_Stream->SCR |= ENABLE;
+
+            if constexpr (streamNum >= 4) {
+                m_DMA->HIFCR = CLEAR_TCF[streamNum];
+            } else {
+                m_DMA->LIFCR = CLEAR_TCF[streamNum];
+            }
+            
+        }
+
+        void writeToBuffer(const uint8_t* buffSrc, size_t size) {
+            if (size > NDTR_VAL) {
+                return;
+            }
+            if constexpr (config.mode == DmaMode::double_buffer) {
+                if (m_DMA_Stream->SCR & DMA_SETUP::CURRENT_TARGET) {
+                    std::memcpy(const_cast<uint8_t*>(bufferOne.data()), buffSrc, size);
+                } else {
+                    std::memcpy(const_cast<uint8_t*>(bufferTwo.data()), buffSrc, size);
+                }
+            } else if constexpr (config.mode == DmaMode::single) {
+                std::memcpy(const_cast<uint8_t*>(bufferOne.data()), buffSrc, size);
+            }
+        }
+
+        void enableStream() {
+            if constexpr (config.mode == DmaMode::single) {
+                m_DMA_Stream->SM0AR = reinterpret_cast<uint32_t>(bufferOne.data());
+            }
+
+            if constexpr (streamNum >= 4) {
+                m_DMA->HIFCR = DMA_SETUP::CLEAR_TCF[streamNum];
+            } else {
+                m_DMA->LIFCR = DMA_SETUP::CLEAR_TCF[streamNum];
+            }
+
+            m_DMA_Stream->SNDTR = static_cast<uint32_t>(NDTR_VAL);
+            m_DMA_Stream->SCR |= DMA_SETUP::ENABLE;
+        }
+
+        void disableStream() {
+            m_DMA_Stream->SCR &= ~DMA_SETUP::ENABLE;
         }
 
         void handleIRQ() {
@@ -269,7 +308,6 @@ class DmaStreamHandle {
                             &xHigherPriorityTaskWoken
                         );
                     }
-                    m_DMA_Stream->SCR |= ENABLE;
                 }
 
                 //FreeRTOS macro, NOLINT used - non-user-code

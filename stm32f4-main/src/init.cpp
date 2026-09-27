@@ -6,6 +6,7 @@ void initClocks(RccHandle& rcc) {
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOAEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOBEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::DMA2EN);
+    rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::DMA1EN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::CRCEN);
 
     rcc.enableAPB1PeripheralClock(APB1_PERIPHERAL_BITS::SPI2EN);
@@ -15,8 +16,10 @@ void initClocks(RccHandle& rcc) {
 }
 
 void initIRQs(Nvic& nvic) {
-    nvic.enableIRQ(NVIC_IRQs::SPI2_IRQ);
-    nvic.setIrqPriority(NVIC_IRQs::SPI2_IRQ, NVIC_IRQs::SPI2_IRQ_Priority);
+    nvic.enableIRQ(NVIC_IRQs::DMA1_Stream3_IRQ);
+    nvic.setIrqPriority(NVIC_IRQs::DMA1_Stream3_IRQ, NVIC_IRQs::DMA1_Stream3_IRQ_Priority);
+    // nvic.enableIRQ(NVIC_IRQs::DMA1_Stream4_IRQ);
+    // nvic.setIrqPriority(NVIC_IRQs::DMA1_Stream4_IRQ, NVIC_IRQs::DMA1_Stream4_IRQ);
     nvic.enableIRQ(NVIC_IRQs::DMA2_Stream5_IRQ);
     nvic.setIrqPriority(NVIC_IRQs::DMA2_Stream5_IRQ, NVIC_IRQs::DMA2_Stream5_IRQ_Priority);
     nvic.enableIRQ(NVIC_IRQs::USART1_IRQ);
@@ -47,6 +50,9 @@ void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
     gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::SPI2_SCK);
     gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::SPI2_MISO);
     gpioB.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOB_PINS::SPI2_MOSI);
+    gpioB.setPinOutputType(false, GPIOB_PINS::SPI2_SCK);
+    gpioB.setPinOutputType(false, GPIOB_PINS::SPI2_MISO);
+    gpioB.setPinOutputType(false, GPIOB_PINS::SPI2_MOSI);
     gpioB.setPinAlternateFunction(GpioHandle::Func::AF05, GPIOB_PINS::SPI2_SCK);
     gpioB.setPinAlternateFunction(GpioHandle::Func::AF05, GPIOB_PINS::SPI2_MISO);
     gpioB.setPinAlternateFunction(GpioHandle::Func::AF05, GPIOB_PINS::SPI2_MOSI);
