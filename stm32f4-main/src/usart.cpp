@@ -1,16 +1,5 @@
 #include "usart.hpp"
 
-namespace USART_SETUP {
-    constexpr uint32_t REG_RESET_VAL = 0U;
-
-    constexpr uint32_t CR1_UE = (0b1U << 13U);
-    constexpr uint32_t CR1_RE = (0b1U << 2U);
-
-    constexpr uint32_t CR3_DMAR = (0b1U << 6U);
-}
-
-UsartHandle* UsartHandle::instance = nullptr;
-
 /*
     This function ignores heavy math from F4 Reference manual, and only uses ready DIV_Mantissa and DIV_Fraction values
 

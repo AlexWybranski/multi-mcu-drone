@@ -1,14 +1,5 @@
 #include "rtos_tasks.hpp"
 
-#include <cstdint>
-#include <cstring>
-#include <array>
-
-#include "crc.hpp"
-#include "dronePacket.hpp"
-#include "control.hpp"
-#include "dma.hpp"
-
 //Anonymous namespace guarantees that this variables are visible only within this file
 //NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 namespace {
@@ -33,13 +24,17 @@ TaskHandle_t getReceiverTaskHandle() {
     return receiverTaskHandle;
 }
 
-void initTasks() {
+TaskHandle_t getImuTaskHandle() {
+    return imuTaskHandle;
+}
+
+void initTasks(imuTaskContext* ctx) {
     imuTaskHandle = xTaskCreateStatic
     (
         imuTask,
         "imuTask",
         RTOS_INFO::IMU_TASK_STACK_DEPTH,
-        nullptr,
+        ctx,
         RTOS_INFO::IMU_TASK_PRIORITY,
         imuTaskStack.data(),
         &imuTaskBuffer
@@ -80,10 +75,47 @@ void initTasks() {
 }
 
 void imuTask(void* pvParameters) {
-    static_cast<void>(pvParameters);
+    auto* ctx = static_cast<imuTaskContext*>(pvParameters);
+
+    auto* spi = ctx->spi_ptr;
+
+    std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData{};
+
+    spi->setCsHigh();
+    vTaskDelay(pdMS_TO_TICKS(5));
+    spi->setCsLow();
+    vTaskDelay(pdMS_TO_TICKS(5));
+    spi->setCsHigh();
+    vTaskDelay(pdMS_TO_TICKS(5));
+
+    spi->POLLread_write(LSM6DS3::sanityCheck.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
+    spi->POLLread_write(LSM6DS3::ctrl3_c_conf_array.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
+    spi->POLLread_write(LSM6DS3::ctrl1_xl_conf_array.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
+    spi->POLLread_write(LSM6DS3::ctrl2_g_conf_array.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
+
+    uint32_t dataAddress = 0U;
+
+    spi->POLLread_write(LSM6DS3::dataReadSequence.data(), imuData.data(), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH, false);
 
     while(1) {
-        vTaskDelay(100);
+        ctx->dmaResetFunc();
+        
+        spi->DMAstartTransfer();
+
+        xTaskNotifyWait(
+                0,
+                0xFFFFFFFF,
+                &dataAddress,
+                portMAX_DELAY
+        );
+
+        spi->DMAendTransfer();
+
+        std::memcpy(imuData.data(), reinterpret_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
+
+        dataAddress = 0;
+
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 
@@ -107,7 +139,7 @@ void receiverTask(void* pvParameters) {
             pdMS_TO_TICKS(1000)
         ) == pdPASS) {
             rawDataPtr = reinterpret_cast<uint8_t*>(rawDataAddress);
-            std::memcpy(&receivedPacket, rawDataPtr, DMA_SETUP::NDTR_VAL);
+            std::memcpy(&receivedPacket, rawDataPtr, DMA_SETUP::UART_NDTR_VAL);
 
             std::memcpy(&controlData, &receivedPacket, packetStructure::DATA_LENGTH);
 
@@ -117,11 +149,11 @@ void receiverTask(void* pvParameters) {
                 if (!isInitialized) {
                     isInitialized = true;
                 }
-                badPacketsCounter = 0;
+                badPacketsCounter = (badPacketsCounter > 0) ?  badPacketsCounter - 1 : 0;
                 //update global control
             } else {
                 badPacketsCounter++;
-                if (badPacketsCounter > 5) {
+                if (badPacketsCounter > RTOS_INFO::MAX_BAD_PACKETS) {
                     xTaskNotifyGive(failsafeTaskHandle);
                 }
             }

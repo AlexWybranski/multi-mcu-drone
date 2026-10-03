@@ -2,6 +2,15 @@
 #define USART_HPP
 #include <cstdint>
 
+namespace USART_SETUP {
+    constexpr uint32_t REG_RESET_VAL = 0U;
+
+    constexpr uint32_t CR1_UE = (0b1U << 13U);
+    constexpr uint32_t CR1_RE = (0b1U << 2U);
+
+    constexpr uint32_t CR3_DMAR = (0b1U << 6U);
+}
+
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct USART_regs {
     volatile uint32_t SR;
@@ -21,17 +30,12 @@ class UsartHandle {
         [[nodiscard("returned value must be assigned to variable")]]static consteval uint32_t calculateBRRregValue();
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
-        explicit UsartHandle(uint32_t baseAddr) : m_USART(reinterpret_cast<USART_regs*>(baseAddr)) {
-            instance = this;
-        } // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        explicit UsartHandle(uint32_t baseAddr) : m_USART(reinterpret_cast<USART_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         ~UsartHandle() = default;
         UsartHandle(const UsartHandle& other) = delete;
         UsartHandle& operator=(const UsartHandle& other) = delete;
         UsartHandle(UsartHandle&& other) = delete;
         UsartHandle& operator=(UsartHandle&& other) = delete;
-
-        static UsartHandle* instance;
-
 
         volatile uint32_t* getDataRegAddr();
 
