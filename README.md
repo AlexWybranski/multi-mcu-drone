@@ -2,7 +2,7 @@
 
 #### Disclaimer
 - Due to free profiles of HICPP and CPPCOREGUIDELINES in clang-tidy, this code is supposed to be taken as "HICPP-ish verified"
-- **Current State:** Firmware for the STM32 board is partially tested on hardware - dma and uart are tested, spi is still **untested** (As of 22 Sept 2026)
+- **Current State:** Firmware for the STM32 board is tested (all that has been written to this day (**3 Oct 2026**)), work slowed down due to hardware limits - started working on custom pcb
 
 ## System overview
 This firmware is written primarily in C++. The breakdown of the software modules for each specific board is detailed below:
