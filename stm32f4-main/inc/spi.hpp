@@ -1,7 +1,6 @@
 #ifndef SPI_HPP
 #define SPI_HPP
 #include <cstdint>
-#include <concepts>
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -10,45 +9,27 @@ extern "C" {
 
 #include "gpio.hpp"
 
-namespace SPI_constants {
-    constexpr std::size_t TX_BUFFER_SIZE = 32;
-    constexpr std::size_t RX_BUFFER_SIZE = 32;
-}
-
 namespace SPI_SETUP {
-    constexpr uint32_t CR1_BR_VAL = 0b101U;/*0b010U;*/ // pclk/8 -> 48 MHz / 8 = 6 MHz
-    constexpr uint32_t CR1_BR_SHIFT = 3U;
-    constexpr uint32_t CR1_SSM_VAL = 0b1U;
-    constexpr uint32_t CR1_SSM_SHIFT = 9U;
-    constexpr uint32_t CR1_SSI_VAL = 0b1U;
-    constexpr uint32_t CR1_SSI_SHIFT = 8U;
-    constexpr uint32_t CR1_CPHA_VAL = 0b1U;
-    constexpr uint32_t CR1_CPHA_SHIFT = 0;
-    constexpr uint32_t CR1_CPOL_VAL = 0b1U;
-    constexpr uint32_t CR1_CPOL_SHIFT = 1U;
-    constexpr uint32_t CR1_MSTR_VAL = 0b1U;
-    constexpr uint32_t CR1_MSTR_SHIFT = 2U;
-    constexpr uint32_t CR1_SPE_VAL = 0b1U;
-    constexpr uint32_t CR1_SPE_SHIFT = 6U;
-
-    constexpr uint32_t CR2_TXEIE_RESET = 0b1U;
-    constexpr uint32_t CR2_TXEIE_SHIFT = 7U;
-    constexpr uint32_t CR2_RXNEIE_RESET = 0b1U;
-    constexpr uint32_t CR2_RXNEIE_SHIFT = 6U;
-    constexpr uint32_t CR2_ERRIE_RESET = 0b1U;
-    constexpr uint32_t CR2_ERRIE_VAL = 0b1U;
-    constexpr uint32_t CR2_ERRIE_SHIFT = 5U;
-
-    constexpr uint32_t SR_BSY = (0b1U << 7U);
-    constexpr uint32_t SR_OVR = (0b1U << 6U);
-    constexpr uint32_t SR_TXE = (0b1U << 1U);
-    constexpr uint32_t SR_RXNE = (0b1U << 0U);
+    constexpr uint32_t CR1_BR_VAL = (0b101U << 3U); // pclk/64 -> 48 MHz / 64 = 750 kHz
+    constexpr uint32_t CR1_BR_HIGHSPEED_VAL = (0b010U << 3U); // pclk/8 -> 48 MHz / 8 = 6 mHz
+    constexpr uint32_t CR1_SSM = (0b1U << 9U);
+    constexpr uint32_t CR1_SSI = (0b1U << 8U);
+    constexpr uint32_t CR1_CPHA = (0b1U << 0U);
+    constexpr uint32_t CR1_CPOL = (0b1U << 1U);
+    constexpr uint32_t CR1_MSTR = (0b1U << 2U);
+    constexpr uint32_t CR1_SPE = (0b1U << 6U);
 
     constexpr uint32_t CR2_TXEIE = (0b1U << 7U);
     constexpr uint32_t CR2_RXNEIE = (0b1U << 6U);
     constexpr uint32_t CR2_ERRIE = (0b1U << 5U);
     constexpr uint32_t CR2_TXDMAEN = (0b1U << 1U);
     constexpr uint32_t CR2_RXDMAEN = (0b1U << 0U);
+
+    constexpr uint32_t SR_BSY = (0b1U << 7U);
+    constexpr uint32_t SR_OVR = (0b1U << 6U);
+    constexpr uint32_t SR_TXE = (0b1U << 1U);
+    constexpr uint32_t SR_RXNE = (0b1U << 0U);
+
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
@@ -62,11 +43,6 @@ struct SPI_regs {
     volatile uint32_t TXCRCR;
     volatile uint32_t I2SCFGR;
     volatile uint32_t I2SPR;
-};
-
-template <typename DmaStreamHandle>
-concept CanStartTransfer = requires(DmaStreamHandle dma, uint8_t* buffSrc, size_t size) {
-    { dma.writeToBuffer(buffSrc, size) } -> std::same_as<void>;
 };
 
 class SpiHandle {
@@ -94,13 +70,10 @@ class SpiHandle {
                 - No CRC
                 - 8-bit data frame format
                 - Software CS management
-                - 6 MHz
+                - 6 MHz - 750kHz for debug purposes
                 - Master mode
                 - Mode 3 (CPOL = 1 and CPHA = 1) - Needed by LSM6DS3TR-C IMU Sensor
-
-                - TX interrupts
-                - RX interrupts
-                - Error interrupts
+                - DMA
         */
         void init(uint32_t CS_PIN_NUM);
 

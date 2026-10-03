@@ -79,7 +79,7 @@ void imuTask(void* pvParameters) {
 
     auto* spi = ctx->spi_ptr;
 
-    std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData;
+    std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData{};
 
     spi->setCsHigh();
     vTaskDelay(pdMS_TO_TICKS(5));

@@ -2,6 +2,15 @@
 #define USART_HPP
 #include <cstdint>
 
+namespace USART_SETUP {
+    constexpr uint32_t REG_RESET_VAL = 0U;
+
+    constexpr uint32_t CR1_UE = (0b1U << 13U);
+    constexpr uint32_t CR1_RE = (0b1U << 2U);
+
+    constexpr uint32_t CR3_DMAR = (0b1U << 6U);
+}
+
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct USART_regs {
     volatile uint32_t SR;
