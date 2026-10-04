@@ -1,9 +1,35 @@
 #ifndef TIM_HPP
 #define TIM_HPP
 #include <cstdint>
-/*
-    This class is supposed to be used with TIM1 (Advanced Control Timer)
-*/
+
+namespace TIM_SETUP {
+    constexpr uint32_t CR1_CMS_CENTER_MODE_1 = (0b01U << 5U);
+    constexpr uint32_t CR1_CEN = (0b01U << 0U);
+
+    constexpr uint32_t CCMR1_CH1_PRELOAD_ENABLE = (0b1U << 3U);
+    constexpr uint32_t CCMR1_CH2_PRELOAD_ENABLE = (0b1U << 11U);
+    constexpr uint32_t CCMR2_CH3_PRELOAD_ENABLE = (0b1U << 3U);
+    constexpr uint32_t CCMR2_CH4_PRELOAD_ENABLE = (0b1U << 11U);
+    constexpr uint32_t CCMR1_CH1_PWM_MODE_1 = (0b110U << 4U);
+    constexpr uint32_t CCMR1_CH2_PWM_MODE_1 = (0b110U << 12U);
+    constexpr uint32_t CCMR2_CH3_PWM_MODE_1 = (0b110U << 4U);
+    constexpr uint32_t CCMR2_CH4_PWM_MODE_1 = (0b110U << 12U);
+
+    constexpr uint32_t CCER_CH1_ENABLE = (0b1U << 0U);
+    constexpr uint32_t CCER_CH2_ENABLE = (0b1U << 4U);
+    constexpr uint32_t CCER_CH3_ENABLE = (0b1U << 8U);
+    constexpr uint32_t CCER_CH4_ENABLE = (0b1U << 12U);
+
+    constexpr uint32_t BDTR_MOE = (0b1U << 15U);
+
+    constexpr uint32_t PSC_VAL = 0U;
+
+    constexpr uint32_t ARR_VAL = 500U;
+
+    constexpr uint32_t MAX_DUTY = ARR_VAL;
+    constexpr uint32_t MAX_CHANNEL = 4;
+}
+
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct TIM1_regs {
     volatile uint32_t CR1;
@@ -28,6 +54,16 @@ struct TIM1_regs {
     volatile uint32_t DMAR;
 };
 
+/*
+    PWM spec:
+    - Center aligned wave
+    - ARR - Max counter value
+    - PSC - 
+*/
+
+/*
+    This class is supposed to be used with TIM1 (Advanced Control Timer) only
+*/
 class Tim1Handle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
@@ -40,6 +76,10 @@ class Tim1Handle {
         Tim1Handle& operator=(const Tim1Handle& other) = delete;
         Tim1Handle(Tim1Handle&& other) = delete;
         Tim1Handle& operator=(Tim1Handle&& other) = delete;
+
+        void init();
+
+        void setDuty(uint32_t channel, uint16_t duty);
 };
 
 #endif
