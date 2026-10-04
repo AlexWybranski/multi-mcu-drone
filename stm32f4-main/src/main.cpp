@@ -72,12 +72,6 @@ extern "C" {
         }
     }
 
-    // void DMA1_Stream4_IRQHandler() { //SPI_TX
-    //     if (IRQ_Config::dma1s4 != nullptr) {
-    //         IRQ_Config::dma1s4->handleIRQ();
-    //     }
-    // }
-
     void DMA2_Stream5_IRQHandler() { //UART_RX
         if (IRQ_Config::dma2s5 != nullptr) {
             IRQ_Config::dma2s5->handleIRQ();
@@ -114,6 +108,8 @@ int main() {
 
     initClocks(rcc);
     initGpio(gpioA, gpioB);
+
+    tim1.init();
     
     static imuTaskContext imuTaskCtx {
         []() {
@@ -125,7 +121,7 @@ int main() {
         },
         &spi2
     };
-    
+
     initTasks(&imuTaskCtx);
     
     TaskHandle_t receiverTaskPtr = getReceiverTaskHandle();

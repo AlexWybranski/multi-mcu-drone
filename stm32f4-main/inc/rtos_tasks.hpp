@@ -11,6 +11,7 @@
 #include "dma.hpp"
 #include "spi.hpp"
 #include "imu.hpp" // IWYU pragma: keep
+#include "tim.hpp" // IWYU pragma: keep
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -38,7 +39,7 @@ struct imuTaskContext {
     SpiHandle* spi_ptr;
 };
 
-void initTasks(imuTaskContext* ctx);
+void initTasks(imuTaskContext* imuCtx);
 
 void imuTask(void* pvParameters);
 void receiverTask(void* pvParameters);

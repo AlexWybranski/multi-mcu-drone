@@ -28,13 +28,13 @@ TaskHandle_t getImuTaskHandle() {
     return imuTaskHandle;
 }
 
-void initTasks(imuTaskContext* ctx) {
+void initTasks(imuTaskContext* imuCtx) {
     imuTaskHandle = xTaskCreateStatic
     (
         imuTask,
         "imuTask",
         RTOS_INFO::IMU_TASK_STACK_DEPTH,
-        ctx,
+        imuCtx,
         RTOS_INFO::IMU_TASK_PRIORITY,
         imuTaskStack.data(),
         &imuTaskBuffer
@@ -149,8 +149,9 @@ void receiverTask(void* pvParameters) {
                 if (!isInitialized) {
                     isInitialized = true;
                 }
-                badPacketsCounter = (badPacketsCounter > 0) ?  badPacketsCounter - 1 : 0;
+                badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
                 //update global control
+
             } else {
                 badPacketsCounter++;
                 if (badPacketsCounter > RTOS_INFO::MAX_BAD_PACKETS) {
