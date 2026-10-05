@@ -28,6 +28,10 @@ TaskHandle_t getImuTaskHandle() {
     return imuTaskHandle;
 }
 
+namespace {
+    std::atomic<uint32_t> rawPacket;
+}
+
 void initTasks(imuTaskContext* imuCtx) {
     imuTaskHandle = xTaskCreateStatic
     (
@@ -151,6 +155,7 @@ void receiverTask(void* pvParameters) {
                 }
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
                 //update global control
+                rawPacket.store(controlData);
 
             } else {
                 badPacketsCounter++;
@@ -170,10 +175,36 @@ void receiverTask(void* pvParameters) {
 }
 
 void enginesTask(void* pvParameters) {
-    static_cast<void>(pvParameters);
+    auto* tim = static_cast<Tim1Handle*>(pvParameters);
+
+    DroneControlData packet{};
+    uint16_t motorPWM_1{0};
+    uint16_t motorPWM_2{0};
+    uint16_t motorPWM_3{0};
+    uint16_t motorPWM_4{0};
+
+    uint16_t l_yaw{0};
 
     while(1) {
-        vTaskDelay(100);
+        packet = std::bit_cast<DroneControlData>(rawPacket.load());
+
+        if ((packet.buttonControlReg & ControlRegister::YAW_LEFT) || (packet.buttonControlReg & ControlRegister::YAW_RIGHT)) {
+            l_yaw = MOTOR_CONSTANTS::yaw;
+        } else {
+            l_yaw = 0;
+        }
+
+        motorPWM_1 = packet.throttle - packet.roll + packet.pitch + l_yaw;
+        motorPWM_2 = packet.throttle + packet.roll - packet.pitch + l_yaw;
+        motorPWM_3 = packet.throttle + packet.roll + packet.pitch - l_yaw;
+        motorPWM_4 = packet.throttle - packet.roll - packet.pitch - l_yaw;
+
+        tim->setDutyCh1(motorPWM_1);
+        tim->setDutyCh2(motorPWM_2);
+        tim->setDutyCh3(motorPWM_3);
+        tim->setDutyCh4(motorPWM_4);
+
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <array> // IWYU pragma: keep
+#include <atomic> // IWYU pragma: keep
 
 #include "crc.hpp" // IWYU pragma: keep
 #include "dronePacket.hpp" // IWYU pragma: keep
@@ -12,6 +13,7 @@
 #include "spi.hpp"
 #include "imu.hpp" // IWYU pragma: keep
 #include "tim.hpp" // IWYU pragma: keep
+#include "motors.hpp" // IWYU pragma: keep
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -37,6 +39,10 @@ struct imuTaskContext {
     using DmaStreamManager = void(*)(void);
     DmaStreamManager dmaResetFunc;
     SpiHandle* spi_ptr;
+};
+
+struct enginesTaskContext {
+    Tim1Handle* tim_ptr;
 };
 
 void initTasks(imuTaskContext* imuCtx);

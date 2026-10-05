@@ -22,4 +22,16 @@ struct __attribute__((packed)) DroneControlPacket {
     uint32_t crcValue{0xFFFFFFFF};
 };
 
+struct __attribute__((packed)) DroneControlData {
+    uint8_t throttle{0};
+    uint8_t roll{0};
+    uint8_t pitch{0};
+    uint8_t buttonControlReg{0};
+};
+
+union DroneData {
+    DroneControlData data;
+    uint32_t dataNumFormat;
+};
+
 #endif

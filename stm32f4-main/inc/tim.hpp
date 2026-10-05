@@ -26,7 +26,7 @@ namespace TIM_SETUP {
 
     constexpr uint32_t ARR_VAL = 500U;
 
-    constexpr uint32_t MAX_DUTY = ARR_VAL;
+    constexpr uint16_t MAX_DUTY = static_cast<uint16_t>(ARR_VAL);
     constexpr uint32_t MAX_CHANNEL = 4;
 }
 
@@ -79,7 +79,10 @@ class Tim1Handle {
 
         void init();
 
-        void setDuty(uint32_t channel, uint16_t duty);
+        void setDutyCh1(uint16_t duty);
+        void setDutyCh2(uint16_t duty);
+        void setDutyCh3(uint16_t duty);
+        void setDutyCh4(uint16_t duty);
 };
 
 #endif

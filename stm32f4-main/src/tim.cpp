@@ -20,29 +20,31 @@ void Tim1Handle::init() {
     m_TIM->CR1 |= CR1_CEN;
 }
 
-void Tim1Handle::setDuty(uint32_t channel, uint16_t duty) {
-    if (channel > TIM_SETUP::MAX_CHANNEL) {
-        return;
-    }
-
+void Tim1Handle::setDutyCh1(uint16_t duty) {
     if (duty > TIM_SETUP::MAX_DUTY) {
-        duty = static_cast<uint16_t>(TIM_SETUP::MAX_DUTY);
+        duty = TIM_SETUP::MAX_DUTY;
     }
-
-    switch (channel) {
-        case 1:
-            m_TIM->CCR1 = duty;
-            break;
-        case 2:
-            m_TIM->CCR2 = duty;
-            break;
-        case 3:
-            m_TIM->CCR3 = duty;
-            break;
-        case 4:
-            m_TIM->CCR4 = duty;
-            break;
-        default:
-            return;
+    
+    m_TIM->CCR1 = duty;
+}
+void Tim1Handle::setDutyCh2(uint16_t duty) {
+    if (duty > TIM_SETUP::MAX_DUTY) {
+        duty = TIM_SETUP::MAX_DUTY;
     }
+    
+    m_TIM->CCR2 = duty;
+}
+void Tim1Handle::setDutyCh3(uint16_t duty) {
+    if (duty > TIM_SETUP::MAX_DUTY) {
+        duty = TIM_SETUP::MAX_DUTY;
+    }
+    
+    m_TIM->CCR3 = duty;
+}
+void Tim1Handle::setDutyCh4(uint16_t duty) {
+    if (duty > TIM_SETUP::MAX_DUTY) {
+        duty = TIM_SETUP::MAX_DUTY;
+    }
+    
+    m_TIM->CCR4 = duty;
 }
