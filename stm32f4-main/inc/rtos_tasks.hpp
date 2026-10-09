@@ -8,7 +8,6 @@
 
 #include "crc.hpp" // IWYU pragma: keep
 #include "dronePacket.hpp" // IWYU pragma: keep
-#include "control.hpp" // IWYU pragma: keep
 #include "dma.hpp"
 #include "spi.hpp"
 #include "imu.hpp" // IWYU pragma: keep
@@ -45,7 +44,7 @@ struct enginesTaskContext {
     Tim1Handle* tim_ptr;
 };
 
-void initTasks(imuTaskContext* imuCtx);
+void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesCtx);
 
 void imuTask(void* pvParameters);
 void receiverTask(void* pvParameters);

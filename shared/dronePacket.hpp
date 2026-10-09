@@ -13,25 +13,26 @@ namespace ControlRegister {
     constexpr uint8_t NO_PAD = (0b1U << 7U);
 }
 
-struct __attribute__((packed)) DroneControlPacket {
-    uint8_t throttle{128};
-    uint8_t roll{128};
-    uint8_t pitch{128};
-    uint8_t buttonControlReg{0};
-
-    uint32_t crcValue{0xFFFFFFFF};
-};
+namespace packetStructure {
+    constexpr uint32_t PACKET_SIZE = 8U;
+    constexpr uint32_t DATA_LENGTH = 4U;
+}
 
 struct __attribute__((packed)) DroneControlData {
-    uint8_t throttle{0};
-    uint8_t roll{0};
-    uint8_t pitch{0};
-    uint8_t buttonControlReg{0};
+    uint16_t throttle : 8;
+    int16_t roll : 9;
+    int16_t pitch : 9;
+    uint8_t buttonControlReg : 6;
 };
 
-union DroneData {
+union ControlDataUnion {
     DroneControlData data;
-    uint32_t dataNumFormat;
+    uint32_t dataRaw;
+};
+
+struct __attribute__((packed)) DroneControlPacket {
+    ControlDataUnion controlData;
+    uint32_t crcValue{0xFFFFFFFF};
 };
 
 #endif

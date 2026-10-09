@@ -31,7 +31,7 @@ extern "C" {
 
 constexpr size_t ESP_NOW_TASK_STACK_SIZE = 2048U;
 constexpr size_t INDICATOR_TASK_STACK_SIZE = 2048U;
-constexpr uint32_t ESP_NOW_TASK_DELAY_MS = 20U;
+constexpr uint32_t ESP_NOW_TASK_DELAY_MS = 10U;
 
 StackType_t txEspNowTask[ESP_NOW_TASK_STACK_SIZE*4U];
 StaticTask_t txEspNowTaskBuffer;
@@ -67,8 +67,6 @@ int app_main(void) {
 
     RemoteControl::initRemoteConnection();
 
-    RemoteControl::initNeutralCRC();
-
     indicatorEventGroupHandle = xEventGroupCreateStatic(&indicatorEventGroup);
 
     txEspNowTaskHandle = xTaskCreateStaticPinnedToCore
@@ -82,19 +80,6 @@ int app_main(void) {
         &txEspNowTaskBuffer,
         tskNO_AFFINITY
     );
-
-    // indicatorTaskHandle = xTaskCreateStaticPinnedToCore
-    // (
-    //     indicatorTaskFunc,
-    //     "indicatorTask",
-    //     INDICATOR_TASK_STACK_SIZE,
-    //     nullptr,
-    //     3,
-    //     indicatorTask,
-    //     &indicatorTaskBuffer,
-    //     tskNO_AFFINITY
-    // );
-
 
     // Configure BTstack for ESP32 VHCI Controller
     btstack_init();
@@ -131,9 +116,9 @@ void txEspNowTaskFunc(void* pvParameters) {
         indicatorBits = xEventGroupGetBits(indicatorEventGroupHandle);
 
         if(indicatorBits & xPadConnected) {
-            gpio_set_level(GREEN_LED, SET_HIGH);
             RemoteControl::sendPacket(&packet);
-            esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %u, Roll: %u, Buttons: %u, CRC: %X\n", packet.throttle, packet.pitch, packet.roll, packet.buttonControlReg, packet.crcValue);
+            gpio_set_level(GREEN_LED, SET_HIGH);
+            esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %d, Roll: %d, Buttons: %u, CRC: %X\n", packet.controlData.data.throttle, packet.controlData.data.pitch, packet.controlData.data.roll, packet.controlData.data.buttonControlReg, packet.crcValue);
         } else {
             esp_rom_printf("Pad NOT connected\n");
             gpio_set_level(GREEN_LED, SET_LOW);

@@ -41,7 +41,6 @@ namespace ConstantValues {
     constexpr gpio_num_t GREEN_LED = GPIO_NUM_21;
     constexpr uint32_t SET_HIGH = 1;
     constexpr uint32_t SET_LOW = 0;
-    constexpr uint32_t GREEN_BLINK_FREQ = 300; //300ms
 
     constexpr EventBits_t xPadConnected = (0b1U << 0U); 
 };
@@ -62,8 +61,16 @@ namespace ButtonMasks {
 
 class RemoteControl {
     private:
-        static inline uint8_t scaleAxisValue(int32_t axisValue) {
-            return static_cast<uint8_t>((axisValue / 4) + ConstantValues::NEUTRAL_AXIS_VAL);
+        static inline int16_t scaleAxisValue(int32_t axisValue) {
+            return static_cast<int16_t>((axisValue >> 1U));
+        }
+
+        static inline int16_t scaleThrottleValue(int32_t axisValue) {
+            int16_t val = static_cast<uint16_t>((axisValue >> 2U) + ConstantValues::NEUTRAL_AXIS_VAL);
+            if (val > 255) {
+                val -= 1;
+            }
+            return val;
         }
                 
         static int32_t applyDeadzone(int32_t axis);
@@ -71,8 +78,6 @@ class RemoteControl {
         static inline DroneControlPacket m_currentPacket;
         static inline DroneControlPacket m_sharedPacket;
         static inline std::mutex m_packetMutex;
-        
-        static inline uint32_t N_PACKET_CRC;
         
         static inline esp_now_peer_info_t m_peer;
         
@@ -84,13 +89,6 @@ class RemoteControl {
         static void calculateCRC(DroneControlPacket* dronePacket);
         
         static void sendPacket(DroneControlPacket *packet);        
-        
-        /*
-        Use this function only once
-        */
-        static inline void initNeutralCRC() {
-            N_PACKET_CRC = esp_rom_crc32_le(ConstantValues::N_CRC_CALC_VALUE, ConstantValues::NEUTRAL_DATA.data(), ConstantValues::PACKET_DATA_SIZE);
-        }
         
         /*
         This function initiates both wifi and esp_now protocol

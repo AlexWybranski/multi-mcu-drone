@@ -32,7 +32,7 @@ namespace {
     std::atomic<uint32_t> rawPacket;
 }
 
-void initTasks(imuTaskContext* imuCtx) {
+void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesTaskCtx) {
     imuTaskHandle = xTaskCreateStatic
     (
         imuTask,
@@ -60,7 +60,7 @@ void initTasks(imuTaskContext* imuCtx) {
         enginesTask,
         "enginesTask",
         RTOS_INFO::ENGINES_TASK_STACK_DEPTH,
-        nullptr,
+        enginesTaskCtx,
         RTOS_INFO::ENGINES_TASK_PRIORITY,
         enginesTaskStack.data(),
         &enginesTaskBuffer
@@ -157,6 +157,8 @@ void receiverTask(void* pvParameters) {
                 //update global control
                 rawPacket.store(controlData);
 
+            } else if ((receivedPacket.buttonControlReg & ControlRegister::NO_PAD) && isInitialized) {
+                xTaskNotifyGive(failsafeTaskHandle);
             } else {
                 badPacketsCounter++;
                 if (badPacketsCounter > RTOS_INFO::MAX_BAD_PACKETS) {
@@ -175,29 +177,32 @@ void receiverTask(void* pvParameters) {
 }
 
 void enginesTask(void* pvParameters) {
-    auto* tim = static_cast<Tim1Handle*>(pvParameters);
+    auto* ctx = static_cast<enginesTaskContext*>(pvParameters);
+
+    auto* tim = ctx->tim_ptr;
 
     DroneControlData packet{};
-    uint16_t motorPWM_1{0};
-    uint16_t motorPWM_2{0};
-    uint16_t motorPWM_3{0};
-    uint16_t motorPWM_4{0};
+    int16_t motorPWM_1{0};
+    int16_t motorPWM_2{0};
+    int16_t motorPWM_3{0};
+    int16_t motorPWM_4{0};
 
-    uint16_t l_yaw{0};
+    int16_t l_yaw{0};
 
     while(1) {
         packet = std::bit_cast<DroneControlData>(rawPacket.load());
 
-        if ((packet.buttonControlReg & ControlRegister::YAW_LEFT) || (packet.buttonControlReg & ControlRegister::YAW_RIGHT)) {
-            l_yaw = MOTOR_CONSTANTS::yaw;
+        if (packet.buttonControlReg & ControlRegister::YAW_LEFT) {
+            l_yaw = MOTOR_CONSTANTS::YAW_LEFT;
+        } else if (packet.buttonControlReg & ControlRegister::YAW_RIGHT) {
+            l_yaw = MOTOR_CONSTANTS::YAW_RIGHT;
         } else {
             l_yaw = 0;
         }
-
-        motorPWM_1 = packet.throttle - packet.roll + packet.pitch + l_yaw;
-        motorPWM_2 = packet.throttle + packet.roll - packet.pitch + l_yaw;
-        motorPWM_3 = packet.throttle + packet.roll + packet.pitch - l_yaw;
-        motorPWM_4 = packet.throttle - packet.roll - packet.pitch - l_yaw;
+        motorPWM_1 = static_cast<int16_t>(packet.throttle - packet.roll + packet.pitch + l_yaw);
+        motorPWM_2 = static_cast<int16_t>(packet.throttle + packet.roll - packet.pitch + l_yaw);
+        motorPWM_3 = static_cast<int16_t>(packet.throttle + packet.roll + packet.pitch - l_yaw);
+        motorPWM_4 = static_cast<int16_t>(packet.throttle - packet.roll - packet.pitch - l_yaw);
 
         tim->setDutyCh1(motorPWM_1);
         tim->setDutyCh2(motorPWM_2);

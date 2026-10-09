@@ -25,6 +25,12 @@ static platform_instance_t* get_platform_instance(uni_hid_device_t* d);
 static void platform_init(int argc, const char** argv) {
     ARG_UNUSED(argc);
     ARG_UNUSED(argv);
+
+    uni_gamepad_mappings_t mappings = GAMEPAD_DEFAULT_MAPPINGS;
+
+    mappings.axis_y_inverted = true;
+
+    uni_gamepad_set_mappings(&mappings);
 }
 
 static void platform_on_init_complete(void) {

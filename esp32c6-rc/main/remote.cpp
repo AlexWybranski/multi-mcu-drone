@@ -106,38 +106,38 @@ void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_
     int32_t arx = applyDeadzone(axis_rx);
     int32_t ary = applyDeadzone(axis_ry);
 
-    m_currentPacket.throttle = scaleAxisValue(ay);
-    m_currentPacket.roll = scaleAxisValue(arx);
-    m_currentPacket.pitch = scaleAxisValue(ary);
+    m_currentPacket.controlData.data.throttle = scaleThrottleValue(ay);
+    m_currentPacket.controlData.data.roll = scaleAxisValue(arx);
+    m_currentPacket.controlData.data.pitch = scaleAxisValue(ary);
         
     if (buttons & BUTTON_SHOULDER_L) {
-        m_currentPacket.buttonControlReg |= ControlRegister::YAW_LEFT;
+        m_currentPacket.controlData.data.buttonControlReg |= ControlRegister::YAW_LEFT;
     } else if ((dpad & BUTTON_SHOULDER_L) == 0) {
-        m_currentPacket.buttonControlReg &= ~ControlRegister::YAW_LEFT;
+        m_currentPacket.controlData.data.buttonControlReg &= ~ControlRegister::YAW_LEFT;
     }
 
     if (buttons & BUTTON_SHOULDER_R) {
-        m_currentPacket.buttonControlReg |= ControlRegister::YAW_RIGHT;
+        m_currentPacket.controlData.data.buttonControlReg |= ControlRegister::YAW_RIGHT;
     } else if ((dpad & BUTTON_SHOULDER_R) == 0) {
-        m_currentPacket.buttonControlReg &= ~ControlRegister::YAW_RIGHT;
+        m_currentPacket.controlData.data.buttonControlReg &= ~ControlRegister::YAW_RIGHT;
     }
 
     if (buttons & BUTTON_A) {
-        m_currentPacket.buttonControlReg |= ControlRegister::START_STOP_ENGINE;
+        m_currentPacket.controlData.data.buttonControlReg |= ControlRegister::START_STOP_ENGINE;
     } else if ((dpad & BUTTON_A) == 0) {
-        m_currentPacket.buttonControlReg &= ~ControlRegister::START_STOP_ENGINE;
+        m_currentPacket.controlData.data.buttonControlReg &= ~ControlRegister::START_STOP_ENGINE;
     }
 
     if(dpad & DPAD_UP) {
-        m_currentPacket.buttonControlReg |= ControlRegister::CAM_UP;
+        m_currentPacket.controlData.data.buttonControlReg |= ControlRegister::CAM_UP;
     } else if ((dpad & DPAD_UP) == 0) {
-        m_currentPacket.buttonControlReg &= ~ControlRegister::CAM_UP;
+        m_currentPacket.controlData.data.buttonControlReg &= ~ControlRegister::CAM_UP;
     }
 
     if(dpad & DPAD_DOWN) {
-        m_currentPacket.buttonControlReg |= ControlRegister::CAM_DOWN;
+        m_currentPacket.controlData.data.buttonControlReg |= ControlRegister::CAM_DOWN;
     } else if ((dpad & DPAD_DOWN) == 0) {
-        m_currentPacket.buttonControlReg &= ~ControlRegister::CAM_DOWN;
+        m_currentPacket.controlData.data.buttonControlReg &= ~ControlRegister::CAM_DOWN;
     }
 
     {
@@ -147,19 +147,19 @@ void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_
 }
 
 void RemoteControl::padDisconnected() {
-    constexpr uint32_t DELAY_TILL_DISCONNECT = 40U;
+    constexpr uint32_t DELAY_TILL_DISCONNECT = 20U;
     {
         std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
-        m_sharedPacket.buttonControlReg |= ControlRegister::NO_PAD;
+        m_sharedPacket.controlData.data.buttonControlReg |= ControlRegister::NO_PAD;
     }
     vTaskDelay(pdMS_TO_TICKS(DELAY_TILL_DISCONNECT));
-    xEventGroupClearBitsFromISR(indicatorEventGroupHandle, ConstantValues::xPadConnected);
+    xEventGroupClearBits(indicatorEventGroupHandle, ConstantValues::xPadConnected);
 }
 
 void RemoteControl::padReady() {
     xEventGroupSetBits(indicatorEventGroupHandle, ConstantValues::xPadConnected);
     //clear in case of reconnect
-    m_sharedPacket.buttonControlReg &= ~ControlRegister::NO_PAD;
+    m_sharedPacket.controlData.data.buttonControlReg &= ~ControlRegister::NO_PAD;
 }
 
 /*

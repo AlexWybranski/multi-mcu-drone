@@ -42,11 +42,11 @@ void Receiver::onReceive(const esp_now_recv_info_t* info, const uint8_t* data, i
         
         Receiver::m_packet = receivedPacket;
 
-        if(m_packet.buttonControlReg & ControlRegister::CAM_UP) {
+        if(m_packet.controlData.data.buttonControlReg & ControlRegister::CAM_UP) {
             duty-=PWM_STEP;
         }
         
-        if(m_packet.buttonControlReg & ControlRegister::CAM_DOWN) {
+        if(m_packet.controlData.data.buttonControlReg & ControlRegister::CAM_DOWN) {
             duty+=PWM_STEP;
         }
 

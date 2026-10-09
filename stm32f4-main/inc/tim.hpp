@@ -79,10 +79,10 @@ class Tim1Handle {
 
         void init();
 
-        void setDutyCh1(uint16_t duty);
-        void setDutyCh2(uint16_t duty);
-        void setDutyCh3(uint16_t duty);
-        void setDutyCh4(uint16_t duty);
+        void setDutyCh1(int16_t duty);
+        void setDutyCh2(int16_t duty);
+        void setDutyCh3(int16_t duty);
+        void setDutyCh4(int16_t duty);
 };
 
 #endif

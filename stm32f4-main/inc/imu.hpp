@@ -4,6 +4,15 @@
 #include <cstdint>
 #include <array>
 
+struct __attribute__((packed)) ImuTelemetry {
+    int16_t gyro_x;
+    int16_t gyro_y;
+    int16_t gyro_z;
+    int16_t acc_x;
+    int16_t acc_y;
+    int16_t acc_z;
+};
+
 namespace LSM6DS3 {
     enum class LSM6DS3_regs : uint8_t {
         FUNC_CFG_ACCESS         = 0x01,

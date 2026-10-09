@@ -20,31 +20,47 @@ void Tim1Handle::init() {
     m_TIM->CR1 |= CR1_CEN;
 }
 
-void Tim1Handle::setDutyCh1(uint16_t duty) {
+void Tim1Handle::setDutyCh1(int16_t duty) {
     if (duty > TIM_SETUP::MAX_DUTY) {
         duty = TIM_SETUP::MAX_DUTY;
     }
+    if (duty < 0)
+    {
+        duty = 0;
+    }
     
-    m_TIM->CCR1 = duty;
+    m_TIM->CCR1 = static_cast<uint16_t>(duty);
 }
-void Tim1Handle::setDutyCh2(uint16_t duty) {
+void Tim1Handle::setDutyCh2(int16_t duty) {
     if (duty > TIM_SETUP::MAX_DUTY) {
         duty = TIM_SETUP::MAX_DUTY;
     }
+    if (duty < 0)
+    {
+        duty = 0;
+    }
     
-    m_TIM->CCR2 = duty;
+    m_TIM->CCR2 = static_cast<uint16_t>(duty);
 }
-void Tim1Handle::setDutyCh3(uint16_t duty) {
+void Tim1Handle::setDutyCh3(int16_t duty) {
     if (duty > TIM_SETUP::MAX_DUTY) {
         duty = TIM_SETUP::MAX_DUTY;
     }
+    if (duty < 0)
+    {
+        duty = 0;
+    }
     
-    m_TIM->CCR3 = duty;
+    m_TIM->CCR3 = static_cast<uint16_t>(duty);
 }
-void Tim1Handle::setDutyCh4(uint16_t duty) {
+void Tim1Handle::setDutyCh4(int16_t duty) {
     if (duty > TIM_SETUP::MAX_DUTY) {
         duty = TIM_SETUP::MAX_DUTY;
     }
+    if (duty < 0)
+    {
+        duty = 0;
+    }
     
-    m_TIM->CCR4 = duty;
+    m_TIM->CCR4 = static_cast<uint16_t>(duty);
 }

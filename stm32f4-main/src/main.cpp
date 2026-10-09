@@ -122,7 +122,11 @@ int main() {
         &spi2
     };
 
-    initTasks(&imuTaskCtx);
+    static enginesTaskContext enginesTaskCtx {
+        &tim1
+    };
+
+    initTasks(&imuTaskCtx, &enginesTaskCtx);
     
     TaskHandle_t receiverTaskPtr = getReceiverTaskHandle();
     TaskHandle_t imuTaskPtr = getImuTaskHandle();
