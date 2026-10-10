@@ -28,8 +28,10 @@ TaskHandle_t getImuTaskHandle() {
     return imuTaskHandle;
 }
 
+//global variables
 namespace {
     std::atomic<uint32_t> rawPacket{0};
+    ImuTelemetry g_imuData;
 }
 
 void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesTaskCtx) {
@@ -71,7 +73,7 @@ void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesTaskCtx) {
         failsafeTask,
         "failsafeTask",
         RTOS_INFO::FAILSAFE_TASK_STACK_DEPTH,
-        nullptr,
+        enginesTaskCtx,
         RTOS_INFO::FAILSAFE_TASK_PRIORITY,
         failsafeTaskStack.data(),
         &failsafeTaskBuffer
@@ -84,6 +86,8 @@ void imuTask(void* pvParameters) {
     auto* spi = ctx->spi_ptr;
 
     std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData{};
+
+    uint8_t* imuDataStartPtr = &imuData[1];
 
     spi->setCsHigh();
     vTaskDelay(pdMS_TO_TICKS(5));
@@ -119,7 +123,12 @@ void imuTask(void* pvParameters) {
 
         dataAddress = 0;
 
-        vTaskDelay(pdMS_TO_TICKS(1));
+        taskENTER_CRITICAL();
+            std::memcpy(&g_imuData, imuDataStartPtr, sizeof(ImuTelemetry));
+        taskEXIT_CRITICAL();
+
+
+        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }
 
@@ -154,8 +163,9 @@ void receiverTask(void* pvParameters) {
                     isInitialized = true;
                 }
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
+
                 //update global control
-                rawPacket.store(receivedPacket.controlData.dataRaw);
+                rawPacket.store(dataUnion.dataRaw);
 
             } else if ((receivedPacket.controlData.data.buttonControlReg & ControlRegister::NO_PAD) && isInitialized) {
                 xTaskNotifyGive(failsafeTaskHandle);
@@ -185,8 +195,14 @@ void enginesTask(void* pvParameters) {
 
     MotorPWMs motors{};
 
+    ImuTelemetry imuData{};
+
     while(1) {
         packet = std::bit_cast<DroneControlData>(rawPacket.load());
+
+        taskENTER_CRITICAL();
+            imuData = g_imuData;
+        taskEXIT_CRITICAL();
 
         motors = MotorMixer::mixMotors(packet);
 
@@ -200,15 +216,39 @@ void enginesTask(void* pvParameters) {
 }
 
 void failsafeTask(void* pvParameters) {
-    static_cast<void>(pvParameters);
+    auto* ctx = static_cast<enginesTaskContext*>(pvParameters);
+
+    auto* tim = ctx->tim_ptr;
+
+    MotorPWMs motors{};
+
+    bool stationary = false;
 
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-    //ensure that only failsafe task is able to operate engines
-    //vTaskDelete(enginesTaskHandle);
-    //vTaskDelete(receiverTaskHandle);
+    taskENTER_CRITICAL();
+        //ensure that only failsafe task is able to operate engines
+        vTaskDelete(enginesTaskHandle);
+        vTaskDelete(receiverTaskHandle);
+    taskEXIT_CRITICAL();
 
     while(1) {
-        vTaskDelay(100);
+        while (!stationary) {
+            for (int16_t i = 128; i > 0; i--) {
+                motors.motorRigFro_1 = i;
+                motors.motorLefRea_2 = i;
+                motors.motorLefFro_3 = i;
+                motors.motorRigRea_4 = i;
+    
+                tim->setDutyCh1(motors.motorRigFro_1);
+                tim->setDutyCh2(motors.motorLefRea_2);
+                tim->setDutyCh3(motors.motorLefFro_3);
+                tim->setDutyCh4(motors.motorRigRea_4);
+    
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+            stationary = true;
+        }
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
