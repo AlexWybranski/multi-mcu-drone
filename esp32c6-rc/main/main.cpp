@@ -67,6 +67,8 @@ int app_main(void) {
 
     RemoteControl::initRemoteConnection();
 
+    RemoteControl::initExtAntenna();
+
     indicatorEventGroupHandle = xEventGroupCreateStatic(&indicatorEventGroup);
 
     txEspNowTaskHandle = xTaskCreateStaticPinnedToCore

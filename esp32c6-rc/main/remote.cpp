@@ -96,6 +96,18 @@ void RemoteControl::initRemoteConnection() {
     ESP_ERROR_CHECK(esp_now_add_peer(&RemoteControl::m_peer));
 }
 
+void RemoteControl::initExtAntenna() {
+    using namespace ConstantValues;
+
+    gpio_reset_pin(RF_SWITCH);
+    gpio_set_direction(RF_SWITCH, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(ANT_CONFIG);
+    gpio_set_direction(RF_SWITCH, GPIO_MODE_OUTPUT);
+
+    gpio_set_level(RF_SWITCH, SET_LOW); //activates RF Switch
+    gpio_set_level(ANT_CONFIG, SET_HIGH); //activates External antenna (u.fl connector)
+}
+
 /*
     Functions triggered by bluepad callbacks
 */

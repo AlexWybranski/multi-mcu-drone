@@ -38,6 +38,8 @@ namespace ConstantValues {
 
     constexpr uint8_t RST_BUTTONS = ~(ControlRegister::CAM_DOWN | ControlRegister::CAM_UP | ControlRegister::YAW_LEFT | ControlRegister::YAW_RIGHT | ControlRegister::START_STOP_ENGINE);
 
+    constexpr gpio_num_t RF_SWITCH = GPIO_NUM_3;
+    constexpr gpio_num_t ANT_CONFIG = GPIO_NUM_14;
     constexpr gpio_num_t GREEN_LED = GPIO_NUM_21;
     constexpr uint32_t SET_HIGH = 1;
     constexpr uint32_t SET_LOW = 0;
@@ -102,6 +104,8 @@ class RemoteControl {
         static void padDisconnected();
 
         static void padReady();
+
+        static void initExtAntenna();
 };
 
 #endif
