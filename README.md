@@ -8,7 +8,7 @@
 This firmware is written primarily in C++. The general description of the software modules for each specific board is detailed below (**Detailed overview of mcus' firmwares can be found in respective README files in mcu specific folders**):
 
 - [esp32c6-rc](esp32c6-rc/) - Remote control module; handles gamepad input and transmits data wirelessly to the drone via the ESP-NOW protocol.
-- [esp32c3-receiver](esp32c3-receiver/) - Receiver module; captures ESP-NOW packets, forwards them to the [stm32f4-main](stm32f4-main/) module via UART, and generates PWM signal for camera servo control.
+- [esp32c6-receiver](esp32c6-receiver/) - Receiver module; captures ESP-NOW packets, forwards them to the [stm32f4-main](stm32f4-main/) module via UART, and generates PWM signal for camera servo control.
 - [esp32s3-cam](esp32s3-cam/) - Camera module; not implemented at this stage of development.
 - [stm32f4-main](stm32f4-main/) - Flight controller; Main core of the drone. Runs a **completely custom-written bare-metal environment (no vendor HAL, custom startup code, and explicit linker scripts)**. Computes motor mixer logic and generates high-frequency PWM duty cycles based on SPI-sampled IMU data (accelerometer/gyroscope).
 
