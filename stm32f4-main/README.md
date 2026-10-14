@@ -40,6 +40,6 @@ The system utilizes **FreeRTOS** to handle multi-tasking without sacrificing rea
 
 ---
 
-## 🛠️ Verification & Testing
+## Verification & Testing
 * **Algorithmic Validation:** The Motor Mixer logic was isolated and tested natively on a host PC using standard console utilities (`std::cout`) to verify axis calculations.
 * **Hardware Verification:** Output behaviour is monitored in real-time on the prototype hardware using 4 independent hardware PWM channels driving status LEDs, visually mapping motor responses prior to final ESC integration.
