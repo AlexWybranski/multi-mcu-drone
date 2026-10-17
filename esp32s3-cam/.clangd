@@ -1,0 +1,18 @@
+CompileFlags:
+  Add: [
+    -Wno-unknown-pragmas, 
+    -Wno-unused-variable, 
+    "-D__GLIBC_USE(x)=0",
+  ]
+  
+  Remove: [
+    -mlongcalls,
+    -fstrict-volatile-bitfields,
+    -fno-tree-switch-conversion,
+    -fno-shrink-wrap,
+    -mdisable-hardware-atomics,
+    -mfix-esp32-psram-cache-issue,
+    -mfix-esp32-psram-cache-strategy=memw,
+    -fzero-init-padding-bits=all,
+    -fno-malloc-dce
+  ]

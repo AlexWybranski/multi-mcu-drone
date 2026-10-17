@@ -3,10 +3,10 @@
 MotorPWMs MotorMixer::mixMotors(const DroneControlData& data) {
     using namespace MOTOR_SETUP;
 
-    MotorPWMs motors;
+    MotorPWMs motors{};
 
-    int16_t l_throttle = static_cast<int16_t>(data.throttle << 1);
-    int16_t l_yaw;
+    auto l_throttle = static_cast<int16_t>(data.throttle << 1U);
+    int16_t l_yaw = 0;
 
     if (data.buttonControlReg & ControlRegister::YAW_LEFT) {
         l_yaw = YAW_LEFT_STEP;

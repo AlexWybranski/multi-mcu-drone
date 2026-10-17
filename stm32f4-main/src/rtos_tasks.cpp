@@ -28,11 +28,13 @@ TaskHandle_t getImuTaskHandle() {
     return imuTaskHandle;
 }
 
-//global variables
+//global variables secured by atomic or critical sections
+//NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 namespace {
     std::atomic<uint32_t> rawPacket{0};
-    ImuTelemetry g_imuData;
+    ImuTelemetry g_imuData{};
 }
+//NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesTaskCtx) {
     imuTaskHandle = xTaskCreateStatic
@@ -119,7 +121,8 @@ void imuTask(void* pvParameters) {
 
         spi->DMAendTransfer();
 
-        std::memcpy(imuData.data(), reinterpret_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
+        //Mapping DMA's buffer address to code, reinterpret cast needed
+        std::memcpy(imuData.data(), reinterpret_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH); //NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 
         dataAddress = 0;
 
@@ -151,7 +154,8 @@ void receiverTask(void* pvParameters) {
             &rawDataAddress,
             pdMS_TO_TICKS(1000)
         ) == pdPASS) {
-            rawDataPtr = reinterpret_cast<uint8_t*>(rawDataAddress);
+            //Mapping DMA's buffer address to code, reinterpret cast needed
+            rawDataPtr = reinterpret_cast<uint8_t*>(rawDataAddress); //NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             std::memcpy(&receivedPacket, rawDataPtr, DMA_SETUP::UART_NDTR_VAL);
 
             std::memcpy(&dataUnion, &receivedPacket, packetStructure::DATA_LENGTH);
