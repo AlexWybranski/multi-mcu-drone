@@ -178,6 +178,7 @@ class DmaStreamHandle {
                 m_taskToNotify = taskToNotify;
             }
 
+            // Place imu read sequence to buffer to save time in task, rx stream will overwrite it when first read appears
             if (NDTR_VAL == LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH) {
                 std::memcpy(const_cast<uint8_t*>(bufferOne.data()), LSM6DS3::dataReadSequence.data(), NDTR_VAL);
             }

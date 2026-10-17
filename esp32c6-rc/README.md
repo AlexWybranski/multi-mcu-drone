@@ -1,109 +1,25 @@
-# Bluepad32 for ESP32
+# Remote control module (ESP32-C6)
 
-Supports the different ESP32 chips:
+This subsystem acts as the transmitter. It handles wireless gamepad inputs and packages them into high-speed, optimized telemetry frames.
 
-* ESP32
-* ESP32-S3
-* ESP32-C3 / ESP32-C6
-* ESP32-H2
+### Features
+* **C/C++ Interoperability (Bridge Functions):** Integrated a C++ static class with the standard C-based `bluepad32` library. Implemented custom bridge functions (`extern "C"`) to call C++ class functions from `bluepad32` callbacks.
+* **Bluepad32 & BTStack Integration:** Interfaces with standard Bluetooth controllers (e.g., PS4/Xbox) via a single-core BLE stack.
+* **Data Packing Optimization:** Packs joystick data and CRC32 value into a 64-bit packet to reduce airtime and latency.
+* **ESP-NOW Transmission:** Transmits custom packet structure directly to the drone via raw ESP-NOW frames (bypassing heavy Wi-Fi protocol overhead).
 
-## Install dependencies
+## Packet structure
+[shared/dronePacket.hpp](shared/dronePacket.hpp)`
+```cpp
+struct __attribute__((packed)) DroneControlData { // Drone's control data updated and evaluated at runtime.
+    uint16_t throttle : 8;
+    int16_t roll : 9;
+    int16_t pitch : 9;
+    uint8_t buttonControlReg : 6; // 6-bit button register to handle status flags (e.g. YAW_LEFT, CAM_UP, START_ENGINES, NO_PAD)
+};
 
-1. Install ESP-IDF
-
-   Install the ESP32 toolchain. Use version **5.3**. Might work on newer / older
-   ones, but not tested.
-
-    * <https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/>
-
-2. Integrate BTstack into ESP32
-
-   ```sh
-   cd ${BLUEPAD32}/external/btstack/port/esp32
-   # This will install BTstack as a component inside Bluepad32 source code (recommended).
-   # Remove "IDF_PATH=../../../../src" if you want it installed in the ESP-IDF folder
-   IDF_PATH=../../../../src ./integrate_btstack.py
-   ```
-
-3. Compile Bluepad32
-
-    ```sh
-    # Possible options: esp32, esp32-s3, esp32-c3, esp32-c6 or esp32-h2
-    idf.py set-target esp32
-    ```
-
-   And compile it:
-
-    ```sh
-    idf.py build
-    ```
-
-4. Flash it
-
-    ```sh
-    idf.py flash monitor
-    ```
-
-## Debugging
-
-In case you need to debug an ESP32-S3 (or ESP32-C3 / C6) using JTAG, follow these steps: (or
-read [ESP32 JTAG Debugging][esp32-gdb]).
-
-*Note: If you have a standard ESP32, you can do it with an [ESP-PROG][esp-prog] module.*
-
-TL;DR: Open 3 terminals, and do:
-
-### Terminal 1
-
-```shell
-idf.py openocd
+struct __attribute__((packed)) DroneControlPacket {
+    ControlDataUnion controlData; // Union allows treating DroneControlData both as a raw uint32_t and as a bit-field struct (for std::atomic task synchronization).
+    uint32_t crcValue{0xFFFFFFFF}; //initial CRC value that is calculated before sending packet
+};
 ```
-
-Or if you prefer the verbose way (but not both):
-
-```shell
-# Open OpenOCD
-# Valid for ESP32-S3. Change it to "esp32c3-builtin.cfg" for ESP32-C3
-sudo openocd -f board/esp32s3-builtin.cfg  -c "adapter speed 5000"
-```
-
-### Terminal 2
-
-```shell
-idf.py gdb
-```
-
-Or if you prefer the verbose way (but not both):
-
-```shell
-xtensa-esp32s3-elf-gdb bluepad32_esp32_example_app.elf
-> target remote :3333
-> set remote hardware-watchpoint-limit 2
-> mon reset halt
-> maintenance flush register-cache
-> thb app_main
-> c
-```
-
-### Terminal 3
-
-```shell
-# macOS
-tio /dev/tty.usbmodem21202
-
-# Linux
-tio /dev/ttyACM0
-```
-
-[esp32-gdb]: https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-guides/jtag-debugging/index.html
-
-[esp-prog]: https://docs.espressif.com/projects/esp-iot-solution/en/latest/hw-reference/ESP-Prog_guide.html
-
-## License
-
-- Example code: licensed under Public Domain.
-- Bluepad32: licensed under Apache 2.
-- BTstack:
-    - Free to use for open source projects.
-    - Paid for commercial projects.
-    - <https://github.com/bluekitchen/btstack/blob/master/LICENSE>
