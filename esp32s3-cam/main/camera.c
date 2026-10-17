@@ -1,6 +1,6 @@
 #include "camera.h"
 
-static const char *TAG = "example:take_picture";
+static const char *TAG = "CAM: ";
 
 static camera_config_t camera_config = {
     .pin_pwdn = CAM_PIN_PWDN,
@@ -56,8 +56,4 @@ esp_err_t init_camera(void)
     s->set_aec2(s, 0);  
 
     return ESP_OK;
-}
-
-void cameraTask(void* pvParameters) {
-
 }
