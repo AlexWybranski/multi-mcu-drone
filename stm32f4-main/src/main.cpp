@@ -111,7 +111,8 @@ int main() {
 
     tim1.init();
     
-    static imuTaskContext imuTaskCtx {
+    
+    static flightControlTaskContext flightControlTaskCtx {
         []() {
             dma1s4_spitx.disableStream();
             dma1s3_spirx.disableStream();
@@ -119,19 +120,16 @@ int main() {
             dma1s3_spirx.enableStream();
             dma1s4_spitx.enableStream();
         },
-        &spi2
+        spi2,
+        tim1
     };
 
-    static enginesTaskContext enginesTaskCtx {
-        &tim1
-    };
-
-    initTasks(&imuTaskCtx, &enginesTaskCtx);
+    initTasks(&flightControlTaskCtx);
     
     TaskHandle_t receiverTaskPtr = getReceiverTaskHandle();
-    TaskHandle_t imuTaskPtr = getImuTaskHandle();
+    TaskHandle_t flightControlTaskPtr = getFlightControlTaskHandle();
     
-    dma1s3_spirx.init(spi2.getDataRegAddr(), imuTaskPtr);
+    dma1s3_spirx.init(spi2.getDataRegAddr(), flightControlTaskPtr);
     dma1s4_spitx.init(spi2.getDataRegAddr(), nullptr);
     dma2s5_uartrx.init(uart1.getDataRegAddr(), receiverTaskPtr);
     

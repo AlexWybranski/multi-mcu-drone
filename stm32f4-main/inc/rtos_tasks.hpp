@@ -8,11 +8,12 @@
 
 #include "crc.hpp" // IWYU pragma: keep
 #include "dronePacket.hpp" // IWYU pragma: keep
-#include "dma.hpp"
+#include "dma.hpp" // IWYU pragma: keep
 #include "spi.hpp"
 #include "imu.hpp" // IWYU pragma: keep
 #include "tim.hpp" // IWYU pragma: keep
 #include "motors.hpp" // IWYU pragma: keep
+#include "pid.hpp"
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -22,36 +23,32 @@ extern "C" {
 namespace RTOS_INFO {
     constexpr uint32_t IMU_TASK_STACK_DEPTH = 512;
     constexpr uint32_t RECEIVER_TASK_STACK_DEPTH = 512;
-    constexpr uint32_t ENGINES_TASK_STACK_DEPTH = 512;
+    constexpr uint32_t FLIGHT_CONTROL_TASK_STACK_DEPTH = 512;
     constexpr uint32_t FAILSAFE_TASK_STACK_DEPTH = 512;
 
-    constexpr UBaseType_t IMU_TASK_PRIORITY = 3; 
-    constexpr UBaseType_t RECEIVER_TASK_PRIORITY = 4; 
-    constexpr UBaseType_t ENGINES_TASK_PRIORITY = 2; 
+    constexpr UBaseType_t RECEIVER_TASK_PRIORITY = 3; 
+    constexpr UBaseType_t FLIGHT_CONTROL_TASK_PRIORITY = 4; 
     constexpr UBaseType_t FAILSAFE_TASK_PRIORITY = 5;
 
     //RECEIVER TASK
     constexpr uint32_t MAX_BAD_PACKETS = 5U;
 }
 
-struct imuTaskContext {
+struct flightControlTaskContext {
     using DmaStreamManager = void(*)(void);
     DmaStreamManager dmaResetFunc;
-    SpiHandle* spi_ptr;
+    SpiHandle& spi_ptr;
+    Tim1Handle& tim_ptr;
 };
 
-struct enginesTaskContext {
-    Tim1Handle* tim_ptr;
-};
+void initTasks(flightControlTaskContext* enginesCtx);
 
-void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesCtx);
-
-void imuTask(void* pvParameters);
 void receiverTask(void* pvParameters);
-void enginesTask(void* pvParameters);
+void flightControlTask(void* pvParameters);
 void failsafeTask(void* pvParameters);
 
 TaskHandle_t getReceiverTaskHandle();
-TaskHandle_t getImuTaskHandle();
+TaskHandle_t getFlightControlTaskHandle();
+TaskHandle_t getFailsafeTaskHandle();
 
 #endif

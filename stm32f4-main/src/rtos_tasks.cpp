@@ -3,19 +3,16 @@
 //Anonymous namespace guarantees that this variables are visible only within this file
 //NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 namespace {
-    std::array<StackType_t, RTOS_INFO::IMU_TASK_STACK_DEPTH> imuTaskStack;
     std::array<StackType_t, RTOS_INFO::RECEIVER_TASK_STACK_DEPTH> receiverTaskStack;
-    std::array<StackType_t, RTOS_INFO::ENGINES_TASK_STACK_DEPTH> enginesTaskStack;
+    std::array<StackType_t, RTOS_INFO::FLIGHT_CONTROL_TASK_STACK_DEPTH> flightControlTaskStack;
     std::array<StackType_t, RTOS_INFO::FAILSAFE_TASK_STACK_DEPTH> failsafeTaskStack;
 
-    StaticTask_t imuTaskBuffer;
     StaticTask_t receiverTaskBuffer;
-    StaticTask_t enginesTaskBuffer;
+    StaticTask_t flightControlTaskBuffer;
     StaticTask_t failsafeTaskBuffer;
 
-    TaskHandle_t imuTaskHandle = nullptr;
     TaskHandle_t receiverTaskHandle = nullptr;
-    TaskHandle_t enginesTaskHandle = nullptr;
+    TaskHandle_t flightControlTaskHandle = nullptr;
     TaskHandle_t failsafeTaskHandle = nullptr;
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
@@ -24,30 +21,22 @@ TaskHandle_t getReceiverTaskHandle() {
     return receiverTaskHandle;
 }
 
-TaskHandle_t getImuTaskHandle() {
-    return imuTaskHandle;
+TaskHandle_t getFlightControlTaskHandle() {
+    return flightControlTaskHandle;
 }
 
-//global variables secured by atomic or critical sections
+TaskHandle_t getFailsafeTaskHandle() {
+    return failsafeTaskHandle;
+}
+
+//global variable secured by atomic and critical sections
 //NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 namespace {
     std::atomic<uint32_t> rawPacket{0};
-    ImuTelemetry g_imuData{};
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
-void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesTaskCtx) {
-    imuTaskHandle = xTaskCreateStatic
-    (
-        imuTask,
-        "imuTask",
-        RTOS_INFO::IMU_TASK_STACK_DEPTH,
-        imuCtx,
-        RTOS_INFO::IMU_TASK_PRIORITY,
-        imuTaskStack.data(),
-        &imuTaskBuffer
-    );
-    
+void initTasks(flightControlTaskContext* flightControlTaskCtx) {
     receiverTaskHandle = xTaskCreateStatic
     (
         receiverTask,
@@ -59,15 +48,15 @@ void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesTaskCtx) {
         &receiverTaskBuffer
     );
     
-    enginesTaskHandle = xTaskCreateStatic
+    flightControlTaskHandle = xTaskCreateStatic
     (
-        enginesTask,
+        flightControlTask,
         "enginesTask",
-        RTOS_INFO::ENGINES_TASK_STACK_DEPTH,
-        enginesTaskCtx,
-        RTOS_INFO::ENGINES_TASK_PRIORITY,
-        enginesTaskStack.data(),
-        &enginesTaskBuffer
+        RTOS_INFO::FLIGHT_CONTROL_TASK_STACK_DEPTH,
+        flightControlTaskCtx,
+        RTOS_INFO::FLIGHT_CONTROL_TASK_PRIORITY,
+        flightControlTaskStack.data(),
+        &flightControlTaskBuffer
     );
     
     failsafeTaskHandle = xTaskCreateStatic
@@ -75,64 +64,11 @@ void initTasks(imuTaskContext* imuCtx, enginesTaskContext* enginesTaskCtx) {
         failsafeTask,
         "failsafeTask",
         RTOS_INFO::FAILSAFE_TASK_STACK_DEPTH,
-        enginesTaskCtx,
+        flightControlTaskCtx,
         RTOS_INFO::FAILSAFE_TASK_PRIORITY,
         failsafeTaskStack.data(),
         &failsafeTaskBuffer
     );
-}
-
-void imuTask(void* pvParameters) {
-    auto* ctx = static_cast<imuTaskContext*>(pvParameters);
-
-    auto* spi = ctx->spi_ptr;
-
-    std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData{};
-
-    uint8_t* imuDataStartPtr = &imuData[1];
-
-    spi->setCsHigh();
-    vTaskDelay(pdMS_TO_TICKS(5));
-    spi->setCsLow();
-    vTaskDelay(pdMS_TO_TICKS(5));
-    spi->setCsHigh();
-    vTaskDelay(pdMS_TO_TICKS(5));
-
-    spi->POLLread_write(LSM6DS3::sanityCheck.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
-    spi->POLLread_write(LSM6DS3::ctrl3_c_conf_array.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
-    spi->POLLread_write(LSM6DS3::ctrl1_xl_conf_array.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
-    spi->POLLread_write(LSM6DS3::ctrl2_g_conf_array.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
-
-    uint32_t dataAddress = 0U;
-
-    spi->POLLread_write(LSM6DS3::dataReadSequence.data(), imuData.data(), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH, false);
-
-    while(1) {
-        ctx->dmaResetFunc();
-        
-        spi->DMAstartTransfer();
-
-        xTaskNotifyWait(
-                0,
-                0xFFFFFFFF,
-                &dataAddress,
-                portMAX_DELAY
-        );
-
-        spi->DMAendTransfer();
-
-        //Mapping DMA's buffer address to code, reinterpret cast needed
-        std::memcpy(imuData.data(), reinterpret_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH); //NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-
-        dataAddress = 0;
-
-        taskENTER_CRITICAL();
-            std::memcpy(&g_imuData, imuDataStartPtr, sizeof(ImuTelemetry));
-        taskEXIT_CRITICAL();
-
-
-        vTaskDelay(pdMS_TO_TICKS(5));
-    }
 }
 
 void receiverTask(void* pvParameters) {
@@ -142,7 +78,6 @@ void receiverTask(void* pvParameters) {
     uint8_t* rawDataPtr{nullptr};
 
     DroneControlPacket receivedPacket{};
-    ControlDataUnion dataUnion{};
     uint32_t crc{0};
     uint8_t badPacketsCounter{0};
     bool isInitialized{false};
@@ -154,13 +89,13 @@ void receiverTask(void* pvParameters) {
             &rawDataAddress,
             pdMS_TO_TICKS(1000)
         ) == pdPASS) {
-            //Mapping DMA's buffer address to code, reinterpret cast needed
-            rawDataPtr = reinterpret_cast<uint8_t*>(rawDataAddress); //NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            std::memcpy(&receivedPacket, rawDataPtr, DMA_SETUP::UART_NDTR_VAL);
+            rawDataPtr = std::bit_cast<uint8_t*>(rawDataAddress);
+            
+            taskENTER_CRITICAL();
+                std::memcpy(&receivedPacket, rawDataPtr, DMA_SETUP::UART_NDTR_VAL);
+            taskEXIT_CRITICAL();
 
-            std::memcpy(&dataUnion, &receivedPacket, packetStructure::DATA_LENGTH);
-
-            crc = calculateCRC(dataUnion.dataRaw);
+            crc = calculateCRC(receivedPacket.controlData.dataRaw);
 
             if (crc == receivedPacket.crcValue) {
                 if (!isInitialized) {
@@ -169,7 +104,7 @@ void receiverTask(void* pvParameters) {
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
 
                 //update global control
-                rawPacket.store(dataUnion.dataRaw);
+                rawPacket.store(receivedPacket.controlData.dataRaw);
 
             } else if ((receivedPacket.controlData.data.buttonControlReg & ControlRegister::NO_PAD) && isInitialized) {
                 xTaskNotifyGive(failsafeTaskHandle);
@@ -190,39 +125,73 @@ void receiverTask(void* pvParameters) {
     }
 }
 
-void enginesTask(void* pvParameters) {
-    auto* ctx = static_cast<enginesTaskContext*>(pvParameters);
+void flightControlTask(void* pvParameters) {
+    auto* ctx = static_cast<flightControlTaskContext*>(pvParameters);
+    auto& spi = ctx->spi_ptr;
+    auto& tim = ctx->tim_ptr;
 
-    auto* tim = ctx->tim_ptr;
+    std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData{};
+    uint8_t* imuDataStartPtr = &imuData[1];
+    ImuTelemetry imuDataRaw{};
+    ImuDataNormalized imuDataNormalized{};
+    uint32_t dataAddress = 0U;
 
     DroneControlData packet{};
 
+    Pid pid;
     MotorPWMs motors{};
 
-    ImuTelemetry imuData{};
+    TickType_t xLastWakeTime;
+
+    if(!initImu(spi)) {
+        return;
+    } 
 
     while(1) {
+        
+        ctx->dmaResetFunc();
+        
+        spi.DMAstartTransfer();
+        
+        xTaskNotifyWait(
+            0,
+            0xFFFFFFFF,
+            &dataAddress,
+            portMAX_DELAY
+        );
+        
+        spi.DMAendTransfer();
+        
         packet = std::bit_cast<DroneControlData>(rawPacket.load());
+        
+        std::memcpy(imuData.data(), std::bit_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
+        
+        std::memcpy(&imuDataRaw, imuDataStartPtr, sizeof(ImuTelemetry));
 
-        taskENTER_CRITICAL();
-            imuData = g_imuData;
-        taskEXIT_CRITICAL();
+        normalizeDataFromImu(imuDataRaw, imuDataNormalized);
+
+        pid.calculateAxisValuesGyro(imuDataNormalized);
+        pid.calculateAxisValuesAcc(imuDataNormalized);
+
+        pid.complementaryFilter();
 
         motors = MotorMixer::mixMotors(packet);
 
-        tim->setDutyCh1(motors.motorRigFro_1);
-        tim->setDutyCh2(motors.motorLefRea_2);
-        tim->setDutyCh3(motors.motorLefFro_3);
-        tim->setDutyCh4(motors.motorRigRea_4);
+        tim.setDutyCh1(motors.motorRigFro_1);
+        tim.setDutyCh2(motors.motorLefRea_2);
+        tim.setDutyCh3(motors.motorLefFro_3);
+        tim.setDutyCh4(motors.motorRigRea_4);
 
-        vTaskDelay(pdMS_TO_TICKS(1));
+        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
     }
 }
 
 void failsafeTask(void* pvParameters) {
-    auto* ctx = static_cast<enginesTaskContext*>(pvParameters);
+    auto* ctx = static_cast<flightControlTaskContext*>(pvParameters);
 
-    auto* tim = ctx->tim_ptr;
+    auto& tim = ctx->tim_ptr;
+
+    auto& spi = ctx->tim_ptr;
 
     MotorPWMs motors{};
 
@@ -232,7 +201,7 @@ void failsafeTask(void* pvParameters) {
 
     taskENTER_CRITICAL();
         //ensure that only failsafe task is able to operate engines
-        vTaskDelete(enginesTaskHandle);
+        vTaskDelete(flightControlTaskHandle);
         vTaskDelete(receiverTaskHandle);
     taskEXIT_CRITICAL();
 
@@ -244,10 +213,10 @@ void failsafeTask(void* pvParameters) {
                 motors.motorLefFro_3 = i;
                 motors.motorRigRea_4 = i;
     
-                tim->setDutyCh1(motors.motorRigFro_1);
-                tim->setDutyCh2(motors.motorLefRea_2);
-                tim->setDutyCh3(motors.motorLefFro_3);
-                tim->setDutyCh4(motors.motorRigRea_4);
+                tim.setDutyCh1(motors.motorRigFro_1);
+                tim.setDutyCh2(motors.motorLefRea_2);
+                tim.setDutyCh3(motors.motorLefFro_3);
+                tim.setDutyCh4(motors.motorRigRea_4);
     
                 vTaskDelay(pdMS_TO_TICKS(10));
             }

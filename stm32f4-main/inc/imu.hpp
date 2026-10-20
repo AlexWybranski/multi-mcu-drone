@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <array>
 
+#include "spi.hpp"
+
 struct __attribute__((packed)) ImuTelemetry {
     int16_t gyro_x;
     int16_t gyro_y;
@@ -11,6 +13,15 @@ struct __attribute__((packed)) ImuTelemetry {
     int16_t acc_x;
     int16_t acc_y;
     int16_t acc_z;
+};
+
+struct __attribute__((packed)) ImuDataNormalized {
+    float gyro_x;   //dps
+    float gyro_y;   //dps
+    float gyro_z;   //dps
+    float acc_x;    //g
+    float acc_y;    //g
+    float acc_z;    //g
 };
 
 namespace LSM6DS3 {
@@ -52,11 +63,17 @@ namespace LSM6DS3 {
         Z_OFS_USR               = 0x75
     };
 
+    namespace Sensivity {
+        constexpr float LINEAR = 0.122f/1000; 
+        constexpr float ANGULAR = 17.50f/1000; 
+    }
+
     namespace PreconfiguredRegsValues {
         constexpr uint8_t INT1_CTRL_REG_VAL =   (0b11U << 0U); //INT1 generates interrupt when gyroscope and accelerometer has ready data
         constexpr uint8_t CTRL1_XL_REG_VAL =    (0b10001000U); //1.66kHz, +/-4g scale
         constexpr uint8_t CTRL2_G_REG_VAL =     (0b10000100U); //1.66kHz, 500 dps scale
         constexpr uint8_t CTRL3_C_REG_VAL =     (0b00100100U); //INT pads goes active when low, pushpull mode, 4 wire spi, address incrementation, little endian
+        constexpr uint8_t CTRL6_C_REG_VAL =     (0b00000010U); //168 Hz low pass filter
     }
 
     namespace PreparedRegsAddresses {
@@ -66,6 +83,7 @@ namespace LSM6DS3 {
         constexpr uint8_t WRITE_CTRL3_C =   (static_cast<uint8_t>(LSM6DS3_regs::CTRL3_C));
         constexpr uint8_t WRITE_INT1_CTRL = (static_cast<uint8_t>(LSM6DS3_regs::INT1_CTRL));
         constexpr uint8_t READ_DATA =       (static_cast<uint8_t>(LSM6DS3_regs::OUTX_L_G) | (0b1U << 7U));
+        constexpr uint8_t WRITE_CTRL6_C =   (static_cast<uint8_t>(LSM6DS3_regs::CTRL6_C));
     }
 
     constexpr std::size_t SPI_CONFIG_SEQUENCE_LENGTH = 2U;
@@ -88,6 +106,10 @@ namespace LSM6DS3 {
         PreparedRegsAddresses::WRITE_CTRL2_G,
         PreconfiguredRegsValues::CTRL2_G_REG_VAL,
     };
+    constexpr std::array<uint8_t, SPI_CONFIG_SEQUENCE_LENGTH> ctrl6_c_conf_array {
+        PreparedRegsAddresses::WRITE_CTRL6_C,
+        PreconfiguredRegsValues::CTRL6_C_REG_VAL,
+    };
     constexpr std::array<uint8_t, SENSOR_DATA_READ_SEQUENCE_LENGTH> dataReadSequence {
         PreparedRegsAddresses::READ_DATA,
         DUMMY_BYTE,
@@ -105,5 +127,8 @@ namespace LSM6DS3 {
     };
 }
 
+bool initImu(SpiHandle& spi);
+
+void normalizeDataFromImu(ImuTelemetry& imu, ImuDataNormalized& imuDataOut);
 
 #endif
