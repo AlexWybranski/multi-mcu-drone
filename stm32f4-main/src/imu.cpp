@@ -12,7 +12,7 @@ bool initImu(SpiHandle &spi) {
     vTaskDelay(pdMS_TO_TICKS(5));
 
     spi.POLLread_write(LSM6DS3::sanityCheck.data(), imuData.data(), LSM6DS3::SPI_CONFIG_SEQUENCE_LENGTH, false);
-    if (imuData[1] != 0x6A) {
+    if (imuData[1] != LSM6DS3::WHO_AM_I_VALUE) {
         return false;
     }
 

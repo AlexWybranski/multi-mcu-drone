@@ -1,6 +1,7 @@
 #include "pid.hpp"
 
-float real_angle_x, real_angle_y;
+// DEBUG VARIABLES
+//float real_angle_x, real_angle_y;
 
 void Pid::calculateAxisValuesAcc(ImuDataNormalized& imuData) {
     acc.x = atan2f(imuData.acc_y, sqrtf((imuData.acc_z * imuData.acc_z) + (imuData.acc_x * imuData.acc_x))) * RadianToDegree;
@@ -16,6 +17,7 @@ void Pid::complementaryFilter() {
     realAngle.y = alpha * (realAngle.y + gyro.y) + (1 - alpha) * acc.y;
     realAngle.x = alpha * (realAngle.x + gyro.x) + (1 - alpha) * acc.x;
 
-    real_angle_x = realAngle.x;
-    real_angle_y = realAngle.y;
+    // DEBUG VARIABLES
+    //real_angle_x = realAngle.x;
+    //real_angle_y = realAngle.y;
 }

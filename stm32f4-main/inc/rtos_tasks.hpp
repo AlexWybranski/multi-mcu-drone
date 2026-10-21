@@ -13,7 +13,7 @@
 #include "imu.hpp" // IWYU pragma: keep
 #include "tim.hpp" // IWYU pragma: keep
 #include "motors.hpp" // IWYU pragma: keep
-#include "pid.hpp"
+#include "pid.hpp" // IWYU pragma: keep
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep

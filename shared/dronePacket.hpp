@@ -23,13 +23,8 @@ struct __attribute__((packed)) DroneControlData {
     uint8_t buttonControlReg : 6;
 };
 
-union ControlDataUnion {
-    DroneControlData data;
-    uint32_t dataRaw;
-};
-
 struct __attribute__((packed)) DroneControlPacket {
-    ControlDataUnion controlData;
+    DroneControlData controlData;
     uint32_t crcValue{0xFFFFFFFF};
 };
 
