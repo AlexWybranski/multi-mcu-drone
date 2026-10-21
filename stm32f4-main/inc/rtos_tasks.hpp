@@ -41,7 +41,7 @@ struct flightControlTaskContext {
     Tim1Handle& tim_ptr;
 };
 
-void initTasks(flightControlTaskContext* enginesCtx);
+void initTasks(flightControlTaskContext* flightControlTaskCtx);
 
 void receiverTask(void* pvParameters);
 void flightControlTask(void* pvParameters);

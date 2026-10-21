@@ -25,10 +25,10 @@ bool initImu(SpiHandle &spi) {
 }
 
 void normalizeDataFromImu(ImuTelemetry& imu, ImuDataNormalized& imuDataOut) {
-    imuDataOut.acc_y = (imu.acc_x * LSM6DS3::Sensivity::LINEAR) * (-1.0f);
-    imuDataOut.acc_x = (imu.acc_y * LSM6DS3::Sensivity::LINEAR) * (-1.0f);
-    imuDataOut.acc_z = (imu.acc_z * LSM6DS3::Sensivity::LINEAR) * (-1.0f);
-    imuDataOut.gyro_y = (imu.gyro_x * LSM6DS3::Sensivity::ANGULAR) * (-1.0f);
-    imuDataOut.gyro_x = (imu.gyro_y * LSM6DS3::Sensivity::ANGULAR) * (-1.0f);
-    imuDataOut.gyro_z = (imu.gyro_z * LSM6DS3::Sensivity::ANGULAR) * (-1.0f);
+    imuDataOut.acc_y = (static_cast<float>(imu.acc_x) * LSM6DS3::Sensivity::LINEAR) * (-1.0F);
+    imuDataOut.acc_x = (static_cast<float>(imu.acc_y) * LSM6DS3::Sensivity::LINEAR) * (-1.0F);
+    imuDataOut.acc_z = (static_cast<float>(imu.acc_z) * LSM6DS3::Sensivity::LINEAR) * (-1.0F);
+    imuDataOut.gyro_y = (static_cast<float>(imu.gyro_x) * LSM6DS3::Sensivity::ANGULAR) * (-1.0F);
+    imuDataOut.gyro_x = (static_cast<float>(imu.gyro_y) * LSM6DS3::Sensivity::ANGULAR) * (-1.0F);
+    imuDataOut.gyro_z = (static_cast<float>(imu.gyro_z) * LSM6DS3::Sensivity::ANGULAR) * (-1.0F);
 }

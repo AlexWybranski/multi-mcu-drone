@@ -33,6 +33,7 @@ TaskHandle_t getFailsafeTaskHandle() {
 //NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 namespace {
     std::atomic<uint32_t> rawPacket{0};
+    std::atomic<bool> g_hasLanded{false};
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
@@ -64,7 +65,7 @@ void initTasks(flightControlTaskContext* flightControlTaskCtx) {
         failsafeTask,
         "failsafeTask",
         RTOS_INFO::FAILSAFE_TASK_STACK_DEPTH,
-        flightControlTaskCtx,
+        nullptr,
         RTOS_INFO::FAILSAFE_TASK_PRIORITY,
         failsafeTaskStack.data(),
         &failsafeTaskBuffer
@@ -103,11 +104,13 @@ void receiverTask(void* pvParameters) {
                 }
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
 
+                if ((receivedPacket.controlData.data.buttonControlReg & ControlRegister::NO_PAD) && isInitialized) {
+                    xTaskNotifyGive(failsafeTaskHandle);
+                }
+
                 //update global control
                 rawPacket.store(receivedPacket.controlData.dataRaw);
-
-            } else if ((receivedPacket.controlData.data.buttonControlReg & ControlRegister::NO_PAD) && isInitialized) {
-                xTaskNotifyGive(failsafeTaskHandle);
+                
             } else {
                 badPacketsCounter++;
                 if (badPacketsCounter > RTOS_INFO::MAX_BAD_PACKETS) {
@@ -143,6 +146,9 @@ void flightControlTask(void* pvParameters) {
 
     TickType_t xLastWakeTime;
 
+    bool engineArmed = false;
+    bool hasLanded = false;
+
     if(!initImu(spi)) {
         return;
     } 
@@ -175,53 +181,58 @@ void flightControlTask(void* pvParameters) {
 
         pid.complementaryFilter();
 
+        hasLanded = g_hasLanded.load();
+
         motors = MotorMixer::mixMotors(packet);
 
-        tim.setDutyCh1(motors.motorRigFro_1);
-        tim.setDutyCh2(motors.motorLefRea_2);
-        tim.setDutyCh3(motors.motorLefFro_3);
-        tim.setDutyCh4(motors.motorRigRea_4);
+        if ((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) && engineArmed == false) {
+            engineArmed = true;
+        } else if (((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) || hasLanded) && engineArmed) {
+            engineArmed = false;
+        }
+
+        if(engineArmed) {
+            tim.setDutyCh1(motors.motorRigFro_1);
+            tim.setDutyCh2(motors.motorLefRea_2);
+            tim.setDutyCh3(motors.motorLefFro_3);
+            tim.setDutyCh4(motors.motorRigRea_4);
+        } else {
+            tim.setDutyCh1(0);
+            tim.setDutyCh2(0);
+            tim.setDutyCh3(0);
+            tim.setDutyCh4(0);
+        }
 
         xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
     }
 }
 
 void failsafeTask(void* pvParameters) {
-    auto* ctx = static_cast<flightControlTaskContext*>(pvParameters);
+    static_cast<void>(pvParameters);
 
-    auto& tim = ctx->tim_ptr;
+    ControlDataUnion failsafeControl;
 
-    auto& spi = ctx->tim_ptr;
-
-    MotorPWMs motors{};
-
-    bool stationary = false;
-
+    bool hasLanded = false;
+    
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
+    
     taskENTER_CRITICAL();
-        //ensure that only failsafe task is able to operate engines
-        vTaskDelete(flightControlTaskHandle);
         vTaskDelete(receiverTaskHandle);
     taskEXIT_CRITICAL();
 
     while(1) {
-        while (!stationary) {
-            for (int16_t i = 128; i > 0; i--) {
-                motors.motorRigFro_1 = i;
-                motors.motorLefRea_2 = i;
-                motors.motorLefFro_3 = i;
-                motors.motorRigRea_4 = i;
-    
-                tim.setDutyCh1(motors.motorRigFro_1);
-                tim.setDutyCh2(motors.motorLefRea_2);
-                tim.setDutyCh3(motors.motorLefFro_3);
-                tim.setDutyCh4(motors.motorRigRea_4);
-    
-                vTaskDelay(pdMS_TO_TICKS(10));
-            }
-            stationary = true;
+        for (uint8_t i = 128U; i > 0; i--) {
+            failsafeControl.data.pitch = 0;
+            failsafeControl.data.roll = 0;
+            failsafeControl.data.throttle = i;
+            failsafeControl.data.buttonControlReg = (0 | ControlRegister::NO_PAD);
+            
+            rawPacket.store(failsafeControl.dataRaw);
+
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
+        hasLanded = true;
+        g_hasLanded.store(hasLanded);
         vTaskDelay(pdMS_TO_TICKS(1));
     }
 }

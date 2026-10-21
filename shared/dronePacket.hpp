@@ -8,9 +8,7 @@ namespace ControlRegister {
     constexpr uint8_t CAM_UP = (0b1U << 2U);
     constexpr uint8_t CAM_DOWN = (0b1U << 3U);
     constexpr uint8_t START_STOP_ENGINE = (0b1U << 4U);
-    constexpr uint8_t Res0 = (0b1U << 5U);
-    constexpr uint8_t Res1 = (0b1U << 6U);
-    constexpr uint8_t NO_PAD = (0b1U << 7U);
+    constexpr uint8_t NO_PAD = (0b1U << 5U);
 }
 
 namespace packetStructure {
