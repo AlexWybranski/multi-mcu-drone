@@ -120,7 +120,7 @@ void txEspNowTaskFunc(void* pvParameters) {
         if(indicatorBits & xPadConnected) {
             RemoteControl::sendPacket(&packet);
             gpio_set_level(GREEN_LED, SET_HIGH);
-            esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %d, Roll: %d, Buttons: %u, CRC: %X\n", packet.controlData.data.throttle, packet.controlData.data.pitch, packet.controlData.data.roll, packet.controlData.data.buttonControlReg, packet.crcValue);
+            esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %d, Roll: %d, Buttons: %u, CRC: %X\n", packet.controlData.throttle, packet.controlData.pitch, packet.controlData.roll, packet.controlData.buttonControlReg, packet.crcValue);
         } else {
             esp_rom_printf("Pad NOT connected\n");
             gpio_set_level(GREEN_LED, SET_LOW);

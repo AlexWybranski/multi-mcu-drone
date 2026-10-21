@@ -96,7 +96,7 @@ void receiverTask(void* pvParameters) {
                 std::memcpy(&receivedPacket, rawDataPtr, DMA_SETUP::UART_NDTR_VAL);
             taskEXIT_CRITICAL();
 
-            crc = calculateCRC(receivedPacket.controlData.dataRaw);
+            crc = calculateCRC(std::bit_cast<uint32_t>(receivedPacket.controlData));
 
             if (crc == receivedPacket.crcValue) {
                 if (!isInitialized) {
@@ -104,12 +104,12 @@ void receiverTask(void* pvParameters) {
                 }
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
 
-                if ((receivedPacket.controlData.data.buttonControlReg & ControlRegister::NO_PAD) && isInitialized) {
+                if ((receivedPacket.controlData.buttonControlReg & ControlRegister::NO_PAD) && isInitialized) {
                     xTaskNotifyGive(failsafeTaskHandle);
                 }
 
                 //update global control
-                rawPacket.store(receivedPacket.controlData.dataRaw);
+                rawPacket.store(std::bit_cast<uint32_t>(receivedPacket.controlData));
                 
             } else {
                 badPacketsCounter++;
@@ -144,7 +144,7 @@ void flightControlTask(void* pvParameters) {
     Pid pid;
     MotorPWMs motors{};
 
-    TickType_t xLastWakeTime;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
 
     bool engineArmed = false;
     bool hasLanded = false;
@@ -154,7 +154,8 @@ void flightControlTask(void* pvParameters) {
     } 
 
     while(1) {
-        
+        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
+
         ctx->dmaResetFunc();
         
         spi.DMAstartTransfer();
@@ -202,15 +203,13 @@ void flightControlTask(void* pvParameters) {
             tim.setDutyCh3(0);
             tim.setDutyCh4(0);
         }
-
-        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
     }
 }
 
 void failsafeTask(void* pvParameters) {
     static_cast<void>(pvParameters);
 
-    ControlDataUnion failsafeControl;
+    DroneControlData failsafeControl{};
 
     bool hasLanded = false;
     
@@ -222,12 +221,12 @@ void failsafeTask(void* pvParameters) {
 
     while(1) {
         for (uint8_t i = 128U; i > 0; i--) {
-            failsafeControl.data.pitch = 0;
-            failsafeControl.data.roll = 0;
-            failsafeControl.data.throttle = i;
-            failsafeControl.data.buttonControlReg = (0 | ControlRegister::NO_PAD);
+            failsafeControl.pitch = 0;
+            failsafeControl.roll = 0;
+            failsafeControl.throttle = i;
+            failsafeControl.buttonControlReg = (0U | ControlRegister::NO_PAD);
             
-            rawPacket.store(failsafeControl.dataRaw);
+            rawPacket.store(std::bit_cast<uint32_t>(failsafeControl));
 
             vTaskDelay(pdMS_TO_TICKS(10));
         }

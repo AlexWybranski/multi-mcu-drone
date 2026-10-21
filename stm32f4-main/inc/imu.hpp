@@ -63,6 +63,8 @@ namespace LSM6DS3 {
         Z_OFS_USR               = 0x75
     };
 
+    constexpr uint8_t WHO_AM_I_VALUE = 0x6A;
+
     namespace Sensivity {
         constexpr float LINEAR = 0.122f/1000; 
         constexpr float ANGULAR = 17.50f/1000; 
