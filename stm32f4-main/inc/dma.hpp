@@ -116,10 +116,13 @@ enum class DmaMode : uint32_t {
 };
 
 struct DmaStreamConfig {
+    uint32_t dmaBaseAddr;
+    uint32_t streamNum;
     DmaChannel channel;
     DmaDirection direction;
     DmaPriority priority;
     DmaMode mode;
+    size_t ndtrValue;
 };
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
@@ -142,20 +145,20 @@ struct DMA_regs {
     DMA_Stream_regs StreamRegs[8];
 };
 
-template<uint32_t dmaBaseAddr, uint32_t streamNum, DmaStreamConfig config, size_t NDTR_VAL>
+template<DmaStreamConfig config>
 class DmaStreamHandle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         DMA_regs* const m_DMA; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
         DMA_Stream_regs* const m_DMA_Stream;
 
-        std::array<volatile uint8_t, NDTR_VAL> bufferOne;
-        std::array<volatile uint8_t, NDTR_VAL> bufferTwo;
+        std::array<volatile uint8_t, config.ndtrValue> bufferOne;
+        std::array<volatile uint8_t, config.ndtrValue> bufferTwo;
 
         TaskHandle_t m_taskToNotify{};
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
-        explicit DmaStreamHandle() : m_DMA(reinterpret_cast<DMA_regs*>(dmaBaseAddr)), m_DMA_Stream(&(reinterpret_cast<DMA_regs*>(dmaBaseAddr))->StreamRegs[streamNum]) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        explicit DmaStreamHandle() : m_DMA(reinterpret_cast<DMA_regs*>(config.dmaBaseAddr)), m_DMA_Stream(&(reinterpret_cast<DMA_regs*>(config.dmaBaseAddr))->StreamRegs[config.streamNum]) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         
         ~DmaStreamHandle() = default;
         DmaStreamHandle(const DmaStreamHandle& other) = delete;
@@ -163,10 +166,6 @@ class DmaStreamHandle {
         DmaStreamHandle(DmaStreamHandle&& other) = delete;
         DmaStreamHandle& operator=(DmaStreamHandle&& other) = delete;
 
-        static DmaStreamHandle* instance;
-
-        // In this driver reinterpret_cast is needed to change address to uint32_t number in order to write value to register or to send it via FreeRTOS Notification register
-        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
         /*
             @param peripheral_reg_addr - register from/to which dma will read/write data
             @param taskToNotify - [optional] task that will be notified and get pointer to buffer to read data from
@@ -179,8 +178,8 @@ class DmaStreamHandle {
             }
 
             // Place imu read sequence to buffer to save time in task, rx stream will overwrite it when first read appears
-            if (NDTR_VAL == LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH) {
-                std::memcpy(const_cast<uint8_t*>(bufferOne.data()), LSM6DS3::dataReadSequence.data(), NDTR_VAL);
+            if (config.ndtrValue == LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH) {
+                std::memcpy(const_cast<uint8_t*>(bufferOne.data()), LSM6DS3::dataReadSequence.data(), config.ndtrValue);
             }
 
             m_DMA_Stream->SCR &= ~ENABLE;
@@ -204,7 +203,7 @@ class DmaStreamHandle {
 
             m_DMA_Stream->SCR = SxCR_MASK;
             
-            m_DMA_Stream->SNDTR = static_cast<uint32_t>(NDTR_VAL);
+            m_DMA_Stream->SNDTR = static_cast<uint32_t>(config.ndtrValue);
             
             m_DMA_Stream->SPAR = std::bit_cast<uint32_t>(peripheral_reg_addr);
             
@@ -217,16 +216,16 @@ class DmaStreamHandle {
             }
             
 
-            if constexpr (streamNum >= 4) {
-                m_DMA->HIFCR = CLEAR_TCF[streamNum];
+            if constexpr (config.streamNum >= 4) {
+                m_DMA->HIFCR = CLEAR_TCF[config.streamNum];
             } else {
-                m_DMA->LIFCR = CLEAR_TCF[streamNum];
+                m_DMA->LIFCR = CLEAR_TCF[config.streamNum];
             }
             
         }
 
         void writeToBuffer(const uint8_t* buffSrc, size_t size) {
-            if (size > NDTR_VAL) {
+            if (size > config.ndtrValue) {
                 return;
             }
             if constexpr (config.mode == DmaMode::double_buffer) {
@@ -242,16 +241,16 @@ class DmaStreamHandle {
 
         void enableStream() {
             if constexpr (config.mode == DmaMode::single) {
-                m_DMA_Stream->SM0AR = reinterpret_cast<uint32_t>(bufferOne.data());
+                m_DMA_Stream->SM0AR = std::bit_cast<uint32_t>(bufferOne.data());
             }
 
-            if constexpr (streamNum >= 4) {
-                m_DMA->HIFCR = DMA_SETUP::CLEAR_TCF[streamNum];
+            if constexpr (config.streamNum >= 4) {
+                m_DMA->HIFCR = DMA_SETUP::CLEAR_TCF[config.streamNum];
             } else {
-                m_DMA->LIFCR = DMA_SETUP::CLEAR_TCF[streamNum];
+                m_DMA->LIFCR = DMA_SETUP::CLEAR_TCF[config.streamNum];
             }
 
-            m_DMA_Stream->SNDTR = static_cast<uint32_t>(NDTR_VAL);
+            m_DMA_Stream->SNDTR = static_cast<uint32_t>(config.ndtrValue);
             m_DMA_Stream->SCR |= DMA_SETUP::ENABLE;
         }
 
@@ -264,19 +263,19 @@ class DmaStreamHandle {
 
             uint32_t SR_REG;
 
-            if constexpr (streamNum >= 4) {
+            if constexpr (config.streamNum >= 4) {
                 SR_REG = m_DMA->HISR;
             } else {
                 SR_REG = m_DMA->LISR;
             }
             
-            if (SR_REG & TCIF[streamNum]) {
+            if (SR_REG & TCIF[config.streamNum]) {
                 BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-                if constexpr (streamNum >= 4) {
-                    m_DMA->HIFCR = CLEAR_TCF[streamNum];
+                if constexpr (config.streamNum >= 4) {
+                    m_DMA->HIFCR = CLEAR_TCF[config.streamNum];
                 } else {
-                    m_DMA->LIFCR = CLEAR_TCF[streamNum];
+                    m_DMA->LIFCR = CLEAR_TCF[config.streamNum];
                 }
 
                 if constexpr (config.mode == DmaMode::double_buffer) {
@@ -315,7 +314,6 @@ class DmaStreamHandle {
                 portYIELD_FROM_ISR(xHigherPriorityTaskWoken); //NOLINT(cppcoreguidelines-avoid-do-while,cppcoreguidelines-pro-type-cstyle-cast,hicpp-no-assembler)
             }
         }
-        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 };
 
 #endif
