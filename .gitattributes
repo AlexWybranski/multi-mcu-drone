@@ -1,3 +1,3 @@
 **/managed_components/**/* linguist-vendored
 **/freertos/**/* linguist-vendored
-**/syscalls.c
+**/syscalls.c linguist-vendored
