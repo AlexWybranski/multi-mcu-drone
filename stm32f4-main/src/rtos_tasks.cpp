@@ -154,7 +154,7 @@ void flightControlTask(void* pvParameters) {
     } 
 
     while(1) {
-        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
+        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(2));
 
         ctx->dmaResetFunc();
         
@@ -183,6 +183,8 @@ void flightControlTask(void* pvParameters) {
         pid.calculateAxisValuesAcc(imuDataNormalized);
 
         pid.complementaryFilter();
+
+        pid.inputToAngle(packet.roll, packet.pitch);
 
         hasLanded = g_hasLanded.load();
 

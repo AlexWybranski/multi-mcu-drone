@@ -1,5 +1,7 @@
 #include "motors.hpp"
 
+float motor1, motor2, motor3, motor4;
+
 void MotorMixer::mixMotors(const DroneControlData& data, const PidOutput& input, MotorPWMs& motorsOut) {
     using namespace MOTOR_SETUP;
 
@@ -24,6 +26,11 @@ void MotorMixer::mixMotors(const DroneControlData& data, const PidOutput& input,
     motors.motorLefRea_2 = clamp(motors.motorLefRea_2);
     motors.motorLefFro_3 = clamp(motors.motorLefFro_3);
     motors.motorRigRea_4 = clamp(motors.motorRigRea_4);
+
+    motor1 = motors.motorRigFro_1;
+    motor2 = motors.motorLefRea_2;
+    motor3 = motors.motorLefFro_3;
+    motor4 = motors.motorRigRea_4;
 
     motorsOut.motorRigFro_1 = static_cast<uint16_t>(motors.motorRigFro_1);
     motorsOut.motorLefRea_2 = static_cast<uint16_t>(motors.motorLefRea_2);

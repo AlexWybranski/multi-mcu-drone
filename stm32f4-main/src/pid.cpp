@@ -1,7 +1,8 @@
 #include "pid.hpp"
 
 // DEBUG VARIABLES
-//float real_angle_x, real_angle_y;
+// float real_angle_x, real_angle_y;
+// float set_angle_x, set_angle_y;
 
 void Pid::outputClamp(float& candidate, float& integral, float currentIntegral) {
     using namespace PID_SETUP;
@@ -31,13 +32,17 @@ void Pid::complementaryFilter() {
     realAngle.x = alpha * (realAngle.x + gyro.x) + (1 - alpha) * acc.x;
 
     // DEBUG VARIABLES
-    //real_angle_x = realAngle.x;
-    //real_angle_y = realAngle.y;
+    // real_angle_x = realAngle.x;
+    // real_angle_y = realAngle.y;
 }
 
 void Pid::inputToAngle(int16_t roll, int16_t pitch) {
     setAngle.x = roll * PID_SETUP::SCALE;
     setAngle.y = pitch * PID_SETUP::SCALE;
+
+    // DEBUG VARIABLES
+    // set_angle_x = setAngle.x;
+    // set_angle_y = setAngle.y;
 }
 
 void Pid::calculatePID() {
@@ -73,7 +78,6 @@ void Pid::calculatePID() {
     float outPitch = outP_y + outI_y + outD_y;
 
     // CLAMP AND ANTI-WINDUP
-
     outputClamp(outRoll, integralX, currentIntegralX);
     outputClamp(outPitch, integralY, currentIntegralY);
 

@@ -25,11 +25,11 @@ struct PidOutput {
 
 class Pid {
     private:
-        static constexpr float dt = 0.001f;
+        static constexpr float dt = 0.002f;
         static constexpr float RadianToDegree = 180.0f/3.14159265f;
-        static constexpr float Kp = 1.0f;
-        static constexpr float Ki = 0.0f;
-        static constexpr float Kd = 0.0f;
+        static constexpr float Kp = 1.5f;
+        static constexpr float Ki = 0.1f;
+        static constexpr float Kd = 0.2f;
 
         AxisValues gyro{0.0f,0.0f};
         AxisValues acc{0.0f,0.0f};
