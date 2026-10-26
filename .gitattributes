@@ -1,2 +1,2 @@
-esp32s3-cam/managed_components/**/* linguist-vendored
-stm32f4-main/freertos/**/* linguist-vendored
+**/managed_components/**/* linguist-vendored
+**/freertos/**/* linguist-vendored
