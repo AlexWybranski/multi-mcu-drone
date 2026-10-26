@@ -154,7 +154,7 @@ void flightControlTask(void* pvParameters) {
     } 
 
     while(1) {
-        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
+        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(2));
 
         ctx->dmaResetFunc();
         
@@ -171,8 +171,10 @@ void flightControlTask(void* pvParameters) {
         
         packet = std::bit_cast<DroneControlData>(rawPacket.load());
         
-        std::memcpy(imuData.data(), std::bit_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
-        
+        taskENTER_CRITICAL();
+            std::memcpy(imuData.data(), std::bit_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
+        taskEXIT_CRITICAL();
+
         std::memcpy(&imuDataRaw, imuDataStartPtr, sizeof(ImuTelemetry));
 
         normalizeDataFromImu(imuDataRaw, imuDataNormalized);
@@ -182,14 +184,23 @@ void flightControlTask(void* pvParameters) {
 
         pid.complementaryFilter();
 
+        pid.inputToAngle(packet.roll, packet.pitch);
+
         hasLanded = g_hasLanded.load();
 
-        motors = MotorMixer::mixMotors(packet);
+        pid.calculatePID();
+
+        MotorMixer::mixMotors(packet, pid.pidOutput, motors);
 
         if ((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) && engineArmed == false) {
             engineArmed = true;
-        } else if (((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) || hasLanded) && engineArmed) {
+            pid.resetIntegrals();
+        } else if (((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) && hasLanded) && engineArmed) {
             engineArmed = false;
+            pid.resetIntegrals();
+        } else if (((packet.buttonControlReg & ControlRegister::NO_PAD) && hasLanded) && engineArmed) {
+            engineArmed = false;
+            pid.resetIntegrals();
         }
 
         if(engineArmed) {
