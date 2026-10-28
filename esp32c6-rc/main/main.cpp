@@ -69,6 +69,8 @@ int app_main(void) {
 
     RemoteControl::initExtAntenna();
 
+    RemoteControl::initADC();
+
     indicatorEventGroupHandle = xEventGroupCreateStatic(&indicatorEventGroup);
 
     txEspNowTaskHandle = xTaskCreateStaticPinnedToCore
@@ -115,15 +117,26 @@ void txEspNowTaskFunc(void* pvParameters) {
     while(1) {
         DroneControlPacket packet = RemoteControl::getAndClearPacket();
 
+        RemoteControl::checkBattery();
+
         indicatorBits = xEventGroupGetBits(indicatorEventGroupHandle);
 
         if(indicatorBits & xPadConnected) {
             RemoteControl::sendPacket(&packet);
             gpio_set_level(GREEN_LED, SET_HIGH);
-            esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %d, Roll: %d, Buttons: %u, CRC: %X\n", packet.controlData.throttle, packet.controlData.pitch, packet.controlData.roll, packet.controlData.buttonControlReg, packet.crcValue);
+            //esp_rom_printf("[PACKET] | Throttle: %u, Pitch: %d, Roll: %d, Buttons: %u, CRC: %X\n", packet.controlData.throttle, packet.controlData.pitch, packet.controlData.roll, packet.controlData.buttonControlReg, packet.crcValue);
         } else {
-            esp_rom_printf("Pad NOT connected\n");
+            //esp_rom_printf("Pad NOT connected\n");
             gpio_set_level(GREEN_LED, SET_LOW);
+        }
+
+        if (indicatorBits & xBatteryLow) {
+            while (1) {
+                gpio_set_level(GREEN_LED, SET_HIGH);
+                vTaskDelay(pdMS_TO_TICKS(BAT_LOW_LED_FREQ));
+                gpio_set_level(GREEN_LED, SET_LOW);
+                vTaskDelay(pdMS_TO_TICKS(BAT_LOW_LED_FREQ));
+            }
         }
 
         xTaskDelayUntil(&xLastWakeTime, xFrequency);

@@ -9,10 +9,15 @@
 
 extern "C" {
     #include "esp_now.h"
-    #include "esp_rom_crc.h"
-    #include "driver/gpio.h"
-    #include "freertos/FreeRTOS.h"
+    #include "esp_rom_crc.h" // IWYU pragma: keep
+    #include "esp_wifi.h" // IWYU pragma: keep
+    #include "driver/gpio.h" // IWYU pragma: keep
+    #include "esp_adc/adc_oneshot.h"
+    #include "esp_adc/adc_cali.h"
+    #include "freertos/FreeRTOS.h" // IWYU pragma: keep
     #include "freertos/event_groups.h"
+
+    #include "bridge.h" // IWYU pragma: keep
 }
 
 extern EventGroupHandle_t indicatorEventGroupHandle;
@@ -44,7 +49,11 @@ namespace ConstantValues {
     constexpr uint32_t SET_HIGH = 1;
     constexpr uint32_t SET_LOW = 0;
 
-    constexpr EventBits_t xPadConnected = (0b1U << 0U); 
+    constexpr EventBits_t xPadConnected = (0b1U << 0U);
+    constexpr EventBits_t xBatteryLow = (0b1U << 1U);
+
+    constexpr uint16_t MIN_BATTERY_LEVEL = 3400U;
+    constexpr uint32_t BAT_LOW_LED_FREQ = 1000U;
 };
 
 namespace ButtonMasks {
@@ -82,6 +91,9 @@ class RemoteControl {
         static inline std::mutex m_packetMutex;
         
         static inline esp_now_peer_info_t m_peer;
+
+        static inline adc_cali_handle_t caliHandle;
+        static inline adc_oneshot_unit_handle_t adcHandle;
         
     public:
         RemoteControl() = delete;
@@ -106,6 +118,10 @@ class RemoteControl {
         static void padReady();
 
         static void initExtAntenna();
+
+        static void initADC();
+
+        static void checkBattery();
 };
 
 #endif

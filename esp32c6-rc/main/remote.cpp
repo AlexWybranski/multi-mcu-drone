@@ -1,11 +1,4 @@
 #include "remote.hpp"
-#include "bridge.h"
-
-extern "C" {
-    #include "esp_wifi.h"
-    #include "esp_now.h"
-    #include "esp_rom_crc.h"
-}
 
 int32_t RemoteControl::applyDeadzone(int32_t axis) {
     using namespace ConstantValues;
@@ -106,6 +99,55 @@ void RemoteControl::initExtAntenna() {
 
     gpio_set_level(RF_SWITCH, SET_LOW); //activates RF Switch
     gpio_set_level(ANT_CONFIG, SET_HIGH); //activates External antenna (u.fl connector)
+}
+
+void RemoteControl::initADC() {
+    adc_oneshot_unit_init_cfg_t initConfig = {
+        .unit_id = ADC_UNIT_1,
+        .clk_src = ADC_DIGI_CLK_SRC_DEFAULT,
+        .ulp_mode = ADC_ULP_MODE_DISABLE,
+    };
+
+    adc_cali_curve_fitting_config_t caliConfig {
+        .unit_id = ADC_UNIT_1,
+        .chan = ADC_CHANNEL_0,
+        .atten = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_12
+    };
+
+    
+    adc_oneshot_chan_cfg_t config = {
+        .atten = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_12,
+    };
+    
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&initConfig, &adcHandle));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adcHandle, ADC_CHANNEL_0, &config));
+    ESP_ERROR_CHECK(adc_cali_create_scheme_curve_fitting(&caliConfig, &caliHandle));
+};
+
+void RemoteControl::checkBattery() {
+    int adcRaw{};
+    int voltageRaw{};
+    uint16_t batteryLevel{};
+
+    ESP_ERROR_CHECK(adc_oneshot_read(adcHandle, ADC_CHANNEL_0, &adcRaw));
+    adc_cali_raw_to_voltage(caliHandle, adcRaw, &voltageRaw);
+
+    batteryLevel = static_cast<uint16_t>(voltageRaw * 2U);
+
+    //esp_rom_printf("[BAT] | %u\n", batteryLevel);
+
+    if (batteryLevel < ConstantValues::MIN_BATTERY_LEVEL) {
+        constexpr uint32_t DELAY_TILL_DISCONNECT = 20U;
+        {
+            std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
+            m_sharedPacket.controlData.buttonControlReg |= ControlRegister::NO_PAD;
+        }
+        vTaskDelay(pdMS_TO_TICKS(DELAY_TILL_DISCONNECT));
+        xEventGroupClearBits(indicatorEventGroupHandle, ConstantValues::xPadConnected);
+        xEventGroupSetBits(indicatorEventGroupHandle, ConstantValues::xBatteryLow);
+    }
 }
 
 /*
