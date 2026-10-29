@@ -9,7 +9,7 @@ This subsystem acts as the transmitter. It handles wireless gamepad inputs and p
 * **ESP-NOW Transmission:** Transmits custom packet structure directly to the drone via raw ESP-NOW frames (bypassing heavy Wi-Fi protocol overhead).
 
 ## Packet structure
-[shared/dronePacket.hpp](shared/dronePacket.hpp)`
+[shared/dronePacket.hpp](../shared/dronePacket.hpp)
 ```cpp
 struct __attribute__((packed)) DroneControlData { // Drone's control data updated and evaluated at runtime.
     uint16_t throttle : 8;
@@ -19,7 +19,7 @@ struct __attribute__((packed)) DroneControlData { // Drone's control data update
 };
 
 struct __attribute__((packed)) DroneControlPacket {
-    ControlDataUnion controlData; // Union allows treating DroneControlData both as a raw uint32_t and as a bit-field struct (for std::atomic task synchronization).
-    uint32_t crcValue{0xFFFFFFFF}; //initial CRC value that is calculated before sending packet
+    DroneControlData controlData;
+    uint32_t crcValue{0xFFFFFFFF};
 };
 ```
