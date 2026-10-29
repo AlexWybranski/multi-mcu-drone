@@ -2,7 +2,7 @@
 
 #### Disclaimer
 - Due to free profiles of HICPP and CPPCOREGUIDELINES in clang-tidy, this code is supposed to be taken as "HICPP-ish verified"
-- **Current State:** Firmware is tested on hardware prototype (all that has been written to this day (**14 Oct 2026**)), work slowed down due to hardware limits - custom pcb has been produced and is on their way to Poland
+- **Current State:** Firmware is tested on hardware prototype (all that has been written to this day (**29 Oct 2026**)), custom PCB is being soldered, drone is being assembled
 
 ## System overview
 This firmware is written primarily in C++. The general description of the software modules for each specific board is detailed below (**Detailed overview of mcus' firmwares can be found in respective README files in mcu specific folders**):
