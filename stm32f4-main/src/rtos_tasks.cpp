@@ -6,14 +6,17 @@ namespace {
     std::array<StackType_t, RTOS_INFO::RECEIVER_TASK_STACK_DEPTH> receiverTaskStack;
     std::array<StackType_t, RTOS_INFO::FLIGHT_CONTROL_TASK_STACK_DEPTH> flightControlTaskStack;
     std::array<StackType_t, RTOS_INFO::FAILSAFE_TASK_STACK_DEPTH> failsafeTaskStack;
+    std::array<StackType_t, RTOS_INFO::TELEMETRY_TASK_STACK_DEPTH> telemetryTaskStack;
 
     StaticTask_t receiverTaskBuffer;
     StaticTask_t flightControlTaskBuffer;
     StaticTask_t failsafeTaskBuffer;
+    StaticTask_t telemetryTaskBuffer;
 
     TaskHandle_t receiverTaskHandle = nullptr;
     TaskHandle_t flightControlTaskHandle = nullptr;
     TaskHandle_t failsafeTaskHandle = nullptr;
+    TaskHandle_t telemetryTaskHandle = nullptr;
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
@@ -27,6 +30,10 @@ TaskHandle_t getFlightControlTaskHandle() {
 
 TaskHandle_t getFailsafeTaskHandle() {
     return failsafeTaskHandle;
+}
+
+TaskHandle_t getTelemetryTaskHandle() {
+    return telemetryTaskHandle;
 }
 
 //global variable secured by atomic and critical sections
@@ -69,6 +76,16 @@ void initTasks(flightControlTaskContext* flightControlTaskCtx) {
         RTOS_INFO::FAILSAFE_TASK_PRIORITY,
         failsafeTaskStack.data(),
         &failsafeTaskBuffer
+    );
+
+    telemetryTaskHandle = xTaskCreateStatic(
+        telemetryTask,
+        "telemetryTask",
+        RTOS_INFO::TELEMETRY_TASK_STACK_DEPTH,
+        nullptr,
+        RTOS_INFO::TELEMETRY_TASK_PRIORITY,
+        telemetryTaskStack.data(),
+        &telemetryTaskBuffer
     );
 }
 
@@ -228,6 +245,7 @@ void failsafeTask(void* pvParameters) {
     
     taskENTER_CRITICAL();
         vTaskDelete(receiverTaskHandle);
+        vTaskDelete(telemetryTaskHandle);
     taskEXIT_CRITICAL();
 
     while(1) {
@@ -238,11 +256,40 @@ void failsafeTask(void* pvParameters) {
             failsafeControl.buttonControlReg = (0U | ControlRegister::NO_PAD);
             
             rawPacket.store(std::bit_cast<uint32_t>(failsafeControl));
-
             vTaskDelay(pdMS_TO_TICKS(10));
         }
         hasLanded = true;
         g_hasLanded.store(hasLanded);
         vTaskDelay(pdMS_TO_TICKS(1));
+    }
+}
+
+void telemetryTask(void *pvParameters) {
+    static_cast<void>(pvParameters);
+
+    KissTelemetry escTelemetry;
+    uint32_t rawDataAddress;
+    uint8_t* rawDataPtr;
+    uint16_t batteryLevel;
+
+    while (1) {
+        if (xTaskNotifyWait(
+            0,
+            0xFFFFFFFF,
+            &rawDataAddress,
+            pdMS_TO_TICKS(1000)
+        ) == pdPASS) {
+            rawDataPtr = std::bit_cast<uint8_t*>(rawDataAddress);
+
+            taskENTER_CRITICAL();
+                std::memcpy(&escTelemetry, rawDataPtr, sizeof(KissTelemetry));
+            taskEXIT_CRITICAL();
+
+            batteryLevel = static_cast<uint16_t>((escTelemetry.voltage_h << 8U) | (escTelemetry.voltage_l << 0U));
+
+            if (batteryLevel < 1450) {
+                xTaskNotifyGive(failsafeTaskHandle);
+            }
+        }
     }
 }

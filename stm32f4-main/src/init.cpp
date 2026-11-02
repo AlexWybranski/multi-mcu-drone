@@ -10,6 +10,7 @@ void initClocks(RccHandle& rcc) {
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::CRCEN);
 
     rcc.enableAPB1PeripheralClock(APB1_PERIPHERAL_BITS::SPI2EN);
+    rcc.enableAPB1PeripheralClock(APB1_PERIPHERAL_BITS::USART2EN);
 
     rcc.enableAPB2PeripheralClock(APB2_PERIPHERAL_BITS::USART1EN);
     rcc.enableAPB2PeripheralClock(APB2_PERIPHERAL_BITS::TIM1EN);
@@ -18,12 +19,14 @@ void initClocks(RccHandle& rcc) {
 void initIRQs(Nvic& nvic) {
     nvic.enableIRQ(NVIC_IRQs::DMA1_Stream3_IRQ);
     nvic.setIrqPriority(NVIC_IRQs::DMA1_Stream3_IRQ, NVIC_IRQs::DMA1_Stream3_IRQ_Priority);
-    // nvic.enableIRQ(NVIC_IRQs::DMA1_Stream4_IRQ);
-    // nvic.setIrqPriority(NVIC_IRQs::DMA1_Stream4_IRQ, NVIC_IRQs::DMA1_Stream4_IRQ);
+    nvic.enableIRQ(NVIC_IRQs::DMA1_Stream5_IRQ);
+    nvic.setIrqPriority(NVIC_IRQs::DMA1_Stream5_IRQ, NVIC_IRQs::DMA1_Stream5_IRQ_Priority);
     nvic.enableIRQ(NVIC_IRQs::DMA2_Stream5_IRQ);
     nvic.setIrqPriority(NVIC_IRQs::DMA2_Stream5_IRQ, NVIC_IRQs::DMA2_Stream5_IRQ_Priority);
     nvic.enableIRQ(NVIC_IRQs::USART1_IRQ);
     nvic.setIrqPriority(NVIC_IRQs::USART1_IRQ, NVIC_IRQs::USART1_IRQ_Priority);
+    nvic.enableIRQ(NVIC_IRQs::USART2_IRQ);
+    nvic.setIrqPriority(NVIC_IRQs::USART2_IRQ, NVIC_IRQs::USART2_IRQ_Priority);
 }
 
 void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
@@ -35,6 +38,11 @@ void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH2);
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH3);
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH4);
+
+    gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::USART2_RX);
+    gpioA.setPinAlternateFunction(GpioHandle::Func::AF07, GPIOA_PINS::USART2_RX);
+    gpioA.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOA_PINS::USART2_RX);
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::medium, GPIOA_PINS::USART2_RX);
 
     gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::USART1_TX);
     gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::USART1_RX);
