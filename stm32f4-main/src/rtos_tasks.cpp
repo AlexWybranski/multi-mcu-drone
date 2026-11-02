@@ -195,7 +195,7 @@ void flightControlTask(void* pvParameters) {
         if ((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) && engineArmed == false) {
             engineArmed = true;
             pid.resetIntegrals();
-        } else if (((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) && hasLanded) && engineArmed) {
+        } else if (((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) /*&& hasLanded*/) && engineArmed) {
             engineArmed = false;
             pid.resetIntegrals();
         } else if (((packet.buttonControlReg & ControlRegister::NO_PAD) && hasLanded) && engineArmed) {
@@ -204,10 +204,10 @@ void flightControlTask(void* pvParameters) {
         }
 
         if(engineArmed) {
-            tim.setDutyCh1(motors.motorRigFro_1);
-            tim.setDutyCh2(motors.motorLefRea_2);
-            tim.setDutyCh3(motors.motorLefFro_3);
-            tim.setDutyCh4(motors.motorRigRea_4);
+            tim.setDutyCh1(motors.motor_1);
+            tim.setDutyCh2(motors.motor_2);
+            tim.setDutyCh3(motors.motor_3);
+            tim.setDutyCh4(motors.motor_4);
         } else {
             tim.setDutyCh1(0);
             tim.setDutyCh2(0);

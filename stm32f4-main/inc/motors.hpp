@@ -15,11 +15,18 @@ namespace MOTOR_SETUP {
 }
 
 struct MotorInputs {
-    float motorRigFro_1, motorLefRea_2, motorLefFro_3, motorRigRea_4;
+    float motorRigFro, motorLefRea, motorLefFro, motorRigRea;
 };
 
+/*
+    Decription of physical connection to ESC
+    1 - CW  - Right Rear
+    2 - CCW - Right Front
+    3 - CCW - Left Rear
+    4 - CW  - Left Front
+*/
 struct MotorPWMs {
-    uint16_t motorRigFro_1, motorLefRea_2, motorLefFro_3, motorRigRea_4;
+    uint16_t motor_1, motor_2, motor_3, motor_4;
 };
 
 class MotorMixer {

@@ -17,23 +17,23 @@ void MotorMixer::mixMotors(const DroneControlData& data, const PidOutput& input,
         l_yaw = YAW_RIGHT_STEP;
     }
 
-    motors.motorRigFro_1 = static_cast<int16_t>(l_throttle - input.roll + input.pitch + l_yaw); //RF
-    motors.motorLefRea_2 = static_cast<int16_t>(l_throttle + input.roll - input.pitch + l_yaw); //LR
-    motors.motorLefFro_3 = static_cast<int16_t>(l_throttle + input.roll + input.pitch - l_yaw); //LF
-    motors.motorRigRea_4 = static_cast<int16_t>(l_throttle - input.roll - input.pitch - l_yaw); //RR
+    motors.motorRigFro = static_cast<float>(l_throttle - input.roll + input.pitch + l_yaw); //RF
+    motors.motorLefRea = static_cast<float>(l_throttle + input.roll - input.pitch + l_yaw); //LR
+    motors.motorLefFro = static_cast<float>(l_throttle + input.roll + input.pitch - l_yaw); //LF
+    motors.motorRigRea = static_cast<float>(l_throttle - input.roll - input.pitch - l_yaw); //RR
 
-    motors.motorRigFro_1 = clamp(motors.motorRigFro_1);
-    motors.motorLefRea_2 = clamp(motors.motorLefRea_2);
-    motors.motorLefFro_3 = clamp(motors.motorLefFro_3);
-    motors.motorRigRea_4 = clamp(motors.motorRigRea_4);
+    motors.motorRigFro = clamp(motors.motorRigFro);
+    motors.motorLefRea = clamp(motors.motorLefRea);
+    motors.motorLefFro = clamp(motors.motorLefFro);
+    motors.motorRigRea = clamp(motors.motorRigRea);
 
-    motor1 = motors.motorRigFro_1;
-    motor2 = motors.motorLefRea_2;
-    motor3 = motors.motorLefFro_3;
-    motor4 = motors.motorRigRea_4;
+    motor1 = motors.motorRigRea;
+    motor2 = motors.motorRigFro;
+    motor3 = motors.motorLefRea;
+    motor4 = motors.motorLefFro;
 
-    motorsOut.motorRigFro_1 = static_cast<uint16_t>(motors.motorRigFro_1);
-    motorsOut.motorLefRea_2 = static_cast<uint16_t>(motors.motorLefRea_2);
-    motorsOut.motorLefFro_3 = static_cast<uint16_t>(motors.motorLefFro_3);
-    motorsOut.motorRigRea_4 = static_cast<uint16_t>(motors.motorRigRea_4);
+    motorsOut.motor_1 = static_cast<uint16_t>(motors.motorRigRea);
+    motorsOut.motor_2 = static_cast<uint16_t>(motors.motorRigFro);
+    motorsOut.motor_3 = static_cast<uint16_t>(motors.motorLefRea);
+    motorsOut.motor_4 = static_cast<uint16_t>(motors.motorLefFro);
 }
