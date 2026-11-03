@@ -21,14 +21,22 @@ void Tim1Handle::init() {
 }
 
 void Tim1Handle::setDutyCh1(uint16_t duty) {
+    duty = static_cast<uint16_t>((duty * 2U) + TIM_SETUP::MINIMAL_DUTY_FOR_ESC);
+
     m_TIM->CCR1 = duty;
 }
 void Tim1Handle::setDutyCh2(uint16_t duty) {
+    duty = static_cast<uint16_t>((duty * 2U) + TIM_SETUP::MINIMAL_DUTY_FOR_ESC);
+
     m_TIM->CCR2 = duty;
 }
 void Tim1Handle::setDutyCh3(uint16_t duty) {
+    duty = static_cast<uint16_t>((duty * 2U) + TIM_SETUP::MINIMAL_DUTY_FOR_ESC);
+
     m_TIM->CCR3 = duty;
 }
 void Tim1Handle::setDutyCh4(uint16_t duty) {
+    duty = static_cast<uint16_t>((duty * 2U) + TIM_SETUP::MINIMAL_DUTY_FOR_ESC);
+
     m_TIM->CCR4 = duty;
 }

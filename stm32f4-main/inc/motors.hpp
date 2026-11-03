@@ -9,7 +9,7 @@
 
 namespace MOTOR_SETUP {
     static constexpr int16_t DUTY_MIN = 25U;
-    static constexpr int16_t DUTY_MAX = TIM_SETUP::MAX_DUTY - 25U;
+    static constexpr int16_t DUTY_MAX = 475U;
     static constexpr int16_t YAW_LEFT_STEP = 32U;
     static constexpr int16_t YAW_RIGHT_STEP = -32;
 }

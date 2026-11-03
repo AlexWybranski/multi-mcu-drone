@@ -209,10 +209,10 @@ void flightControlTask(void* pvParameters) {
             tim.setDutyCh3(motors.motor_3);
             tim.setDutyCh4(motors.motor_4);
         } else {
-            tim.setDutyCh1(0);
-            tim.setDutyCh2(0);
-            tim.setDutyCh3(0);
-            tim.setDutyCh4(0);
+            tim.setDutyCh1(0U);
+            tim.setDutyCh2(0U);
+            tim.setDutyCh3(0U);
+            tim.setDutyCh4(0U);
         }
     }
 }

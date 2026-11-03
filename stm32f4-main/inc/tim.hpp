@@ -22,12 +22,15 @@ namespace TIM_SETUP {
 
     constexpr uint32_t BDTR_MOE = (0b1U << 15U);
 
-    constexpr uint32_t PSC_VAL = 0U;
+    constexpr uint32_t PSC_VAL = 59U;
 
-    constexpr uint32_t ARR_VAL = 500U;
+    constexpr uint32_t ARR_VAL = 2000U;
 
     constexpr uint16_t MAX_DUTY = static_cast<uint16_t>(ARR_VAL);
     constexpr uint32_t MAX_CHANNEL = 4;
+
+    constexpr uint16_t MINIMAL_DUTY_FOR_ESC = 1000U; // ESC takes 1000-2000us pulses
+    constexpr uint16_t DUTY_MULTIPLIER = 2U;
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
@@ -57,8 +60,12 @@ struct TIM1_regs {
 /*
     PWM spec:
     - Center aligned wave
-    - ARR - Max counter value
-    - PSC - 
+    - ARR - Max counter value (2000us)
+    - PSC - 59 + 1 -> 60
+    - Freq - 400 Hz
+    
+    As a reminder:
+        Freq = Fclk / (PSC + 1) * ARR
 */
 
 /*
