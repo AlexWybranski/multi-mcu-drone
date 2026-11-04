@@ -111,3 +111,16 @@ void Receiver::initPwm() {
 
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 }
+
+void Receiver::initExtAntenna() {
+    constexpr gpio_num_t RF_SWITCH = GPIO_NUM_3;
+    constexpr gpio_num_t ANT_CONFIG = GPIO_NUM_14;
+
+    gpio_reset_pin(RF_SWITCH);
+    gpio_set_direction(RF_SWITCH, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(ANT_CONFIG);
+    gpio_set_direction(RF_SWITCH, GPIO_MODE_OUTPUT);
+
+    gpio_set_level(RF_SWITCH, SET_LOW); //activates RF Switch
+    gpio_set_level(ANT_CONFIG, SET_HIGH); //activates External antenna (u.fl connector)
+}

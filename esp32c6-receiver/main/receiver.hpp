@@ -27,4 +27,6 @@ class Receiver {
         static void initUart();
 
         static void initPwm();
+
+        static void initExtAntenna();
 };
