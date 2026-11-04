@@ -1,8 +1,9 @@
 #include "dronePacket.hpp"
 
 extern "C" {
-    #include "esp_now.h"
-    #include "driver/uart.h"
+    #include "esp_now.h" // IWYU pragma: keep
+    #include "driver/uart.h" // IWYU pragma: keep
+    #include "driver/gpio.h" // IWYU pragma: keep
 }
 
 namespace PWM_SETUP {
@@ -27,4 +28,6 @@ class Receiver {
         static void initUart();
 
         static void initPwm();
+
+        static void initExtAntenna();
 };
