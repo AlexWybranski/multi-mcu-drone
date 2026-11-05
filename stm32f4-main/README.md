@@ -43,7 +43,7 @@ The system utilizes **FreeRTOS** to handle multi-tasking without sacrificing rea
 
 | Task Name | Priority | Frequency | Description |
 | :--- | :---: | :---: | :--- |
-| **flightControlTask** | `4` | 2000 Hz | Querying IMU sensor, calculates real and set angles, computes the Motor Mixer and PID mathematics, updates PWM channels. |
+| **flightControlTask** | `4` | 500 Hz | Querying IMU sensor, calculates real and set angles, computes the Motor Mixer and PID mathematics, updates PWM channels. |
 | **receiverTask** | `3`  | On demand | Blocked until a new UART frame arrives from the ESP32 receiver. Unpacks the 8-byte packet structure, calculates CRC for first 4 bytes via the hardware CRC peripheral and validates data. |
 | **failsafeTask**| `5`  | On demand | If the leaky bucket for CRC calculation is full or packets are not arriving for the set time, the notification is sent to this task. **receiverTask** is being deleted, failsafe takes control over the drone and is securing the safe landing |
 
