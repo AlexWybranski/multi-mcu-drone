@@ -31,6 +31,7 @@ flowchart LR
     %% B -->|PWM| F ===|PHYSICAL CONNECTION|G
     C <-->|SPI| D
     C -->|PWM| E
+    E -->|UART| C
     end
 ```
 
