@@ -17,6 +17,14 @@ void Pid::outputClamp(float& candidate, float& integral, float currentIntegral) 
     }
 }
 
+float Pid::filterD(float& currentD, float& lastD) {
+    float filteredD{0.0f};
+
+    filteredD = (alphaD * currentD) + ((1 - alphaD) * lastD);
+
+    return filteredD;
+}
+
 void Pid::calculateAxisValuesAcc(ImuDataNormalized& imuData) {
     acc.x = atan2f(imuData.acc_y, sqrtf((imuData.acc_z * imuData.acc_z) + (imuData.acc_x * imuData.acc_x))) * RadianToDegree;
     acc.y = atan2f((imuData.acc_x * -1), sqrtf((imuData.acc_z * imuData.acc_z) + (imuData.acc_y * imuData.acc_y))) * RadianToDegree;
@@ -46,8 +54,8 @@ void Pid::inputToAngle(int16_t roll, int16_t pitch) {
 }
 
 void Pid::calculatePID() {
-    float outP_x{0}, outI_x{0}, outD_x{0};
-    float outP_y{0}, outI_y{0}, outD_y{0};
+    float outP_x{0.0f}, outI_x{0.0f}, outD_x{0.0f};
+    float outP_y{0.0f}, outI_y{0.0f}, outD_y{0.0f};
 
     // ERRORS
     float errorY = setAngle.y - realAngle.y;
@@ -67,8 +75,15 @@ void Pid::calculatePID() {
     outI_y = Ki * integralY;
 
     // D
-    outD_x = Kd * (errorX - prevErrorX) / dt;
-    outD_y = Kd * (errorY - prevErrorY) / dt;
+    float currentD_x{0.0f}, currentD_y{0.0f};
+    currentD_x = Kd * (errorX - prevErrorX) / dt;
+    currentD_y = Kd * (errorY - prevErrorY) / dt;
+
+    outD_x = filterD(currentD_x, lastD_x);
+    outD_y = filterD(currentD_y, lastD_y);
+
+    lastD_x = outD_x;
+    lastD_y = outD_y;
 
     // ACCUMULATE
     prevErrorX = errorX;
