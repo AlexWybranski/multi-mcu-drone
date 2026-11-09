@@ -258,6 +258,14 @@ class DmaStreamHandle {
             m_DMA_Stream->SCR &= ~DMA_SETUP::ENABLE;
         }
 
+        bool checkBuffer() {
+            if (m_DMA_Stream->SNDTR != config.ndtrValue) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
         void handleIRQ() {
             using namespace DMA_SETUP;
 

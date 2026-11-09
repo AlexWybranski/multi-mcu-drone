@@ -106,12 +106,6 @@ extern "C" {
         }
     }
 
-    void USART1_IRQHandler() {
-        if (IRQ_Config::uart1 != nullptr) {
-            IRQ_Config::uart1->handleIRQ();
-        }
-    }
-
     void USART2_IRQHandler() {
         if (IRQ_Config::uart2 != nullptr) {
             IRQ_Config::uart2->handleIRQ();
@@ -174,6 +168,18 @@ int main() {
     
     spi2.init(GPIOB_PINS::SPI2_SCS);
     uart1.init();
+
+    uart2.init();
+    uart2.enableIdleLineInterrupt();
+
+    uart2.setDmaFunc([]() {
+        return dma1s5_telemetry_rx.checkBuffer();
+    }); // Passing lambda which executes DmaStream method to avoid passing complicated template object to another class
+
+    uart2.setDmaResetFunc([]() {
+        dma1s5_telemetry_rx.disableStream();
+        dma1s5_telemetry_rx.enableStream();
+    });
 
     initIRQs(nvic);
     
