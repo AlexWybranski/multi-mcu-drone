@@ -18,7 +18,7 @@ void Pid::outputClamp(float& candidate, float& integral, float currentIntegral) 
 }
 
 float Pid::filterD(float& currentD, float& lastD) {
-    float filteredD{0.0f};
+    float filteredD{0.0F};
 
     filteredD = (alphaD * currentD) + ((1 - alphaD) * lastD);
 
@@ -45,8 +45,8 @@ void Pid::complementaryFilter() {
 }
 
 void Pid::inputToAngle(int16_t roll, int16_t pitch) {
-    setAngle.x = roll * PID_SETUP::SCALE;
-    setAngle.y = pitch * PID_SETUP::SCALE;
+    setAngle.x = static_cast<float>(roll) * PID_SETUP::SCALE;
+    setAngle.y = static_cast<float>(pitch )* PID_SETUP::SCALE;
 
     // DEBUG VARIABLES
     // set_angle_x = setAngle.x;
@@ -54,8 +54,8 @@ void Pid::inputToAngle(int16_t roll, int16_t pitch) {
 }
 
 void Pid::calculatePID() {
-    float outP_x{0.0f}, outI_x{0.0f}, outD_x{0.0f};
-    float outP_y{0.0f}, outI_y{0.0f}, outD_y{0.0f};
+    float outP_x{0.0F}, outI_x{0.0F}, outD_x{0.0F};
+    float outP_y{0.0F}, outI_y{0.0F}, outD_y{0.0F};
 
     // ERRORS
     float errorY = setAngle.y - realAngle.y;
@@ -75,7 +75,8 @@ void Pid::calculatePID() {
     outI_y = Ki * integralY;
 
     // D
-    float currentD_x{0.0f}, currentD_y{0.0f};
+    float currentD_x{0.0F}, currentD_y{0.0F};
+
     currentD_x = Kd * (errorX - prevErrorX) / dt;
     currentD_y = Kd * (errorY - prevErrorY) / dt;
 
@@ -102,6 +103,6 @@ void Pid::calculatePID() {
 }
 
 void Pid::resetIntegrals() {
-    integralX = 0.0f;
-    integralY = 0.0f;
+    integralX = 0.0F;
+    integralY = 0.0F;
 }

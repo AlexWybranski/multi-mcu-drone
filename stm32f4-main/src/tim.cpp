@@ -14,7 +14,7 @@ void Tim1Handle::init() {
     m_TIM->CCMR2 = CCMR2_MASK;
     m_TIM->CCER = CCER_MASK;
     m_TIM->BDTR = BDTR_MASK;
-    m_TIM->PSC = 0U;
+    m_TIM->PSC = PSC_VAL;
     m_TIM->ARR = ARR_VAL;
 
     m_TIM->CR1 |= CR1_CEN;

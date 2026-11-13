@@ -1,14 +1,15 @@
 #include "motors.hpp"
 
-float motor1, motor2, motor3, motor4;
+// DEBUG VARIABLES
+float motor1, motor2, motor3, motor4; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
 void MotorMixer::mixMotors(const DroneControlData& data, const PidOutput& input, MotorPWMs& motorsOut) {
     using namespace MOTOR_SETUP;
 
     MotorInputs motors{};
 
-    auto l_throttle = static_cast<int16_t>(data.throttle << 1U);
-    int16_t l_yaw = 0;
+    auto l_throttle = static_cast<float>(data.throttle << 1U);
+    float l_yaw = 0;
 
     if (data.buttonControlReg & ControlRegister::YAW_LEFT) {
         l_yaw = YAW_LEFT_STEP;

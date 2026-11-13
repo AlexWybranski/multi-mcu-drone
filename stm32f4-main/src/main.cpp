@@ -18,7 +18,7 @@ extern "C" {
 #include "init.hpp"
 #include "rtos_tasks.hpp"
 
-constexpr DmaStreamConfig dma1s3config { //SPI2 RX
+constexpr DmaStreamConfig dma1s3config { //SPI2 RX - FOR IMU
     PeripheralBaseAddr::DMA1_BASEADDR,
     DMA_SETUP::STREAM_3,
     DmaChannel::ch0,
@@ -28,7 +28,7 @@ constexpr DmaStreamConfig dma1s3config { //SPI2 RX
     DMA_SETUP::SPI_NDTR_VAL
 };
 
-constexpr DmaStreamConfig dma1s4config { //SPI2 TX
+constexpr DmaStreamConfig dma1s4config { //SPI2 TX - FOR IMU
     PeripheralBaseAddr::DMA1_BASEADDR,
     DMA_SETUP::STREAM_4,
     DmaChannel::ch0,
@@ -38,7 +38,7 @@ constexpr DmaStreamConfig dma1s4config { //SPI2 TX
     DMA_SETUP::SPI_NDTR_VAL
 };
 
-constexpr DmaStreamConfig dma2s5config { //UART1 RX
+constexpr DmaStreamConfig dma2s5config { //UART1 RX - FOR ESP-RECEIVER
     PeripheralBaseAddr::DMA2_BASEADDR,
     DMA_SETUP::STREAM_5,
     DmaChannel::ch4,
