@@ -7,11 +7,13 @@
 #include <atomic> // IWYU pragma: keep
 
 #include "crc.hpp" // IWYU pragma: keep
-#include "dronePacket.hpp" // IWYU pragma: keep
 #include "dma.hpp" // IWYU pragma: keep
 #include "spi.hpp"
 #include "imu.hpp" // IWYU pragma: keep
 #include "tim.hpp" // IWYU pragma: keep
+#include "gpio.hpp" // IWYU pragma: keep
+
+#include "dronePacket.hpp" // IWYU pragma: keep
 #include "motors.hpp" // IWYU pragma: keep
 #include "pid.hpp" // IWYU pragma: keep
 

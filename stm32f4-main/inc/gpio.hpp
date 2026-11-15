@@ -2,6 +2,8 @@
 #define GPIO_HPP
 #include <cstdint>
 
+#include "stm32f4.hpp" // IWYU pragma: keep
+
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 struct GPIO_regs {
     volatile uint32_t MODER;
@@ -84,5 +86,7 @@ class GpioHandle {
 
         void setPinAlternateFunction(Func func, uint32_t pinNum);
 };
+
+void turnUserDiodeOn();
 
 #endif

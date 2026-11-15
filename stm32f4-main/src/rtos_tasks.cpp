@@ -101,6 +101,7 @@ void receiverTask(void* pvParameters) {
             if (crc == receivedPacket.crcValue) {
                 if (!isInitialized) {
                     isInitialized = true;
+                    turnUserDiodeOn();
                 }
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
 

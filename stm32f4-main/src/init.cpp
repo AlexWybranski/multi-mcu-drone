@@ -5,6 +5,7 @@ void initClocks(RccHandle& rcc) {
 
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOAEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOBEN);
+    rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOCEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::DMA2EN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::DMA1EN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::CRCEN);
