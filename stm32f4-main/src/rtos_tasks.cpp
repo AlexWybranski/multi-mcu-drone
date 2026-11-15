@@ -170,11 +170,11 @@ void flightControlTask(void* pvParameters) {
         
         spi.DMAendTransfer();
         
-        packet = std::bit_cast<DroneControlData>(rawPacket.load());
-        
         taskENTER_CRITICAL();
             std::memcpy(imuData.data(), std::bit_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
         taskEXIT_CRITICAL();
+
+        packet = std::bit_cast<DroneControlData>(rawPacket.load());
 
         std::memcpy(&imuDataRaw, imuDataStartPtr, sizeof(ImuTelemetry));
 
