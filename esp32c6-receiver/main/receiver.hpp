@@ -17,7 +17,6 @@ namespace PWM_SETUP {
 
 class Receiver {
     private:
-        static inline DroneControlPacket m_packet;
         static inline const uart_port_t m_uart_num = UART_NUM_1;
         static inline uint32_t duty = PWM_SETUP::PWM_MIN_DUTY;
     public:
@@ -30,4 +29,8 @@ class Receiver {
         static void initPwm();
 
         static void initExtAntenna();
+
+        static void initUserDiode();
+
+        static void turnUserDiodeOff();
 };

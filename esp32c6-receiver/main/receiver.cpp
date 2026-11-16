@@ -1,4 +1,8 @@
 #include "receiver.hpp"
+#include "driver/gpio.h"
+#include "dronePacket.hpp"
+#include "hal/gpio_types.h"
+#include "soc/gpio_num.h"
 
 #include <cstring>
 
@@ -35,18 +39,28 @@ void Receiver::onReceive(const esp_now_recv_info_t* info, const uint8_t* data, i
 
     DroneControlPacket receivedPacket;
 
+    static bool isInitialized = false;
+
     if(data_len == sizeof(DroneControlPacket)) {
         uart_write_bytes(m_uart_num, data, static_cast<size_t>(data_len));
+
+        if (!isInitialized) {
+            isInitialized = true;
+            Receiver::initUserDiode();
+        }
         
         std::memcpy(&receivedPacket, data, data_len);
-        
-        Receiver::m_packet = receivedPacket;
 
-        if(m_packet.controlData.buttonControlReg & ControlRegister::CAM_UP) {
+        if (receivedPacket.controlData.buttonControlReg & ControlRegister::NO_PAD) {
+            Receiver::turnUserDiodeOff();
+        }
+        /* Camera is deprecated for now, thus this fragment is a dead-code
+
+        if(receivedPacket.controlData.buttonControlReg & ControlRegister::CAM_UP) {
             duty-=PWM_STEP;
         }
         
-        if(m_packet.controlData.buttonControlReg & ControlRegister::CAM_DOWN) {
+        if(receivedPacket.controlData.buttonControlReg & ControlRegister::CAM_DOWN) {
             duty+=PWM_STEP;
         }
 
@@ -61,6 +75,7 @@ void Receiver::onReceive(const esp_now_recv_info_t* info, const uint8_t* data, i
         ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty));
 
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+        */
     } else {
         //DROP PACKET
     }
@@ -86,6 +101,7 @@ void Receiver::initUart() {
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, 16, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 }
 
+// NOT USED
 void Receiver::initPwm() {
     using namespace PWM_SETUP;
 
@@ -125,4 +141,20 @@ void Receiver::initExtAntenna() {
 
     gpio_set_level(RF_SWITCH, SET_LOW); //activates RF Switch
     gpio_set_level(ANT_CONFIG, SET_HIGH); //activates External antenna (u.fl connector)
+}
+
+void Receiver::initUserDiode() {
+    constexpr gpio_num_t LED_BUILTIN = GPIO_NUM_15;
+    constexpr uint32_t SET_LOW = 0;
+
+    gpio_reset_pin(LED_BUILTIN);
+    gpio_set_direction(LED_BUILTIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(LED_BUILTIN, SET_LOW);
+}
+
+void Receiver::turnUserDiodeOff() {
+    constexpr gpio_num_t LED_BUILTIN = GPIO_NUM_15;
+    constexpr uint32_t SET_HIGH = 1;
+
+    gpio_set_level(LED_BUILTIN, SET_HIGH);
 }

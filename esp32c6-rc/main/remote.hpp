@@ -27,14 +27,14 @@ namespace ConstantValues {
     constexpr int32_t NEUTRAL_AXIS_VAL = 128U;
 
     constexpr size_t MAC_LENGTH = 6U; 
-    constexpr std::array<uint8_t, MAC_LENGTH> RECEIVER_MAC = {0x10,0xBD,0xA3,0x90,0xE2,0xB8};
-
+    constexpr std::array<uint8_t, MAC_LENGTH> RECEIVER_MAC = {0x90,0x64,0x9B,0xAB,0x30,0x8C};
+    
     constexpr uint32_t PACKET_DATA_SIZE = 4U;
     constexpr size_t PACKET_SIZE = sizeof(DroneControlPacket);
     
     constexpr uint8_t N_THROTTLE = 128U;
-    constexpr uint8_t N_ROLL = 128U;
-    constexpr uint8_t N_PITCH = 128U;
+    constexpr uint8_t N_ROLL = 0U;
+    constexpr uint8_t N_PITCH = 0U;
     constexpr uint8_t N_BUTTON_REG = 0U;
 
     constexpr std::array<uint8_t, PACKET_DATA_SIZE> NEUTRAL_DATA{N_THROTTLE, N_ROLL, N_PITCH, N_BUTTON_REG};
