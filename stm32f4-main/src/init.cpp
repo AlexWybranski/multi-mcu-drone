@@ -27,7 +27,7 @@ void initIRQs(Nvic& nvic) {
     nvic.setIrqPriority(NVIC_IRQs::USART1_IRQ, NVIC_IRQs::USART1_IRQ_Priority);
 }
 
-void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
+void initGpio(GpioHandle& gpioA, GpioHandle& gpioB, GpioHandle& gpioC) {
     gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH1);
     gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH2);
     gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH3);
@@ -60,4 +60,6 @@ void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
     gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_SCK);
     gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_MISO);
     gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_MOSI);
+
+    gpioC.setPinMode(GpioHandle::Mode::output, GPIOC_PINS::USER_DIODE);
 }

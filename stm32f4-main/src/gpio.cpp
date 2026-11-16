@@ -69,11 +69,3 @@ void GpioHandle::setPinAlternateFunction(GpioHandle::Func func, uint32_t pinNum)
         m_GPIO->AFRL |= (setValue << shift);
     }
 }
-
-void turnUserDiodeOn() {
-    GpioHandle gpioC(PeripheralBaseAddr::GPIOC_BASEADDR);
-
-    gpioC.setPinMode(GpioHandle::Mode::output, GPIOC_PINS::USER_DIODE);
-
-    gpioC.setPinState(false, GPIOC_PINS::USER_DIODE);
-}

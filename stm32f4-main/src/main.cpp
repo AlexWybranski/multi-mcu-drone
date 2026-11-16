@@ -99,6 +99,7 @@ int main() {
     
     static GpioHandle gpioA(PeripheralBaseAddr::GPIOA_BASEADDR);
     static GpioHandle gpioB(PeripheralBaseAddr::GPIOB_BASEADDR);
+    static GpioHandle gpioC(PeripheralBaseAddr::GPIOC_BASEADDR);
 
     static DmaStreamHandle<dma1s3config> dma1s3_spirx; //SPI_RX
     static DmaStreamHandle<dma1s4config> dma1s4_spitx; //SPI_TX
@@ -116,7 +117,7 @@ int main() {
     IRQ_Config::dma2s5 = &dma2s5_uartrx;
 
     initClocks(rcc);
-    initGpio(gpioA, gpioB);
+    initGpio(gpioA, gpioB, gpioC);
 
     tim1.init();
     
@@ -133,7 +134,11 @@ int main() {
         tim1
     };
 
-    initTasks(&flightControlTaskCtx);
+    static receiverTaskContext receiverTaskCtx {
+        gpioC
+    };
+
+    initTasks(&flightControlTaskCtx, &receiverTaskCtx);
     
     TaskHandle_t receiverTaskPtr = getReceiverTaskHandle();
     TaskHandle_t flightControlTaskPtr = getFlightControlTaskHandle();

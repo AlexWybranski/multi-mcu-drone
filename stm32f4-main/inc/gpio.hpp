@@ -87,6 +87,4 @@ class GpioHandle {
         void setPinAlternateFunction(Func func, uint32_t pinNum);
 };
 
-void turnUserDiodeOn();
-
 #endif

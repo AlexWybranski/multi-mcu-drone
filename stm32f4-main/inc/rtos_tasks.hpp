@@ -43,7 +43,11 @@ struct flightControlTaskContext {
     Tim1Handle& tim_ptr;
 };
 
-void initTasks(flightControlTaskContext* flightControlTaskCtx);
+struct receiverTaskContext {
+    GpioHandle& gpio_ptr;
+};
+
+void initTasks(flightControlTaskContext* flightControlTaskCtx, receiverTaskContext* receiverTaskCtx);
 
 void receiverTask(void* pvParameters);
 void flightControlTask(void* pvParameters);

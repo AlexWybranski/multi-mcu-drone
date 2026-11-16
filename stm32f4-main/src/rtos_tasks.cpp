@@ -37,13 +37,13 @@ namespace {
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
-void initTasks(flightControlTaskContext* flightControlTaskCtx) {
+void initTasks(flightControlTaskContext* flightControlTaskCtx, receiverTaskContext* receiverTaskCtx) {
     receiverTaskHandle = xTaskCreateStatic
     (
         receiverTask,
         "receiverTask",
         RTOS_INFO::RECEIVER_TASK_STACK_DEPTH,
-        nullptr,
+        receiverTaskCtx,
         RTOS_INFO::RECEIVER_TASK_PRIORITY,
         receiverTaskStack.data(),
         &receiverTaskBuffer
@@ -73,7 +73,9 @@ void initTasks(flightControlTaskContext* flightControlTaskCtx) {
 }
 
 void receiverTask(void* pvParameters) {
-    static_cast<void>(pvParameters);
+    auto* ctx = static_cast<receiverTaskContext*>(pvParameters);
+
+    auto& gpio = ctx->gpio_ptr;
 
     uint32_t rawDataAddress{0};
     uint8_t* rawDataPtr{nullptr};
@@ -101,7 +103,7 @@ void receiverTask(void* pvParameters) {
             if (crc == receivedPacket.crcValue) {
                 if (!isInitialized) {
                     isInitialized = true;
-                    turnUserDiodeOn();
+                    gpio.setPinState(false, GPIOC_PINS::USER_DIODE);
                 }
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
 
