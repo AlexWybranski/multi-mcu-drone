@@ -3,7 +3,7 @@
 #include <cstdint>
 
 namespace TIM_SETUP {
-    constexpr uint32_t CR1_CMS_CENTER_MODE_1 = (0b01U << 5U);
+    constexpr uint32_t CR1_CMS_EDGE_ALIGN_MODE = ~(0b11U << 5U);
     constexpr uint32_t CR1_CEN = (0b01U << 0U);
 
     constexpr uint32_t CCMR1_CH1_PRELOAD_ENABLE = (0b1U << 3U);
