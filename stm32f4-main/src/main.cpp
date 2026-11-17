@@ -15,6 +15,7 @@ extern "C" {
 #include "gpio.hpp"
 #include "nvic.hpp"
 
+#include "dshot.hpp"
 #include "init.hpp"
 #include "rtos_tasks.hpp"
 
@@ -25,6 +26,8 @@ constexpr DmaStreamConfig dma1s3config { //SPI2 RX - FOR IMU
     DmaDirection::per_to_mem,
     DmaPriority::medium,
     DmaMode::single,
+    DmaMSIZE::byte,
+    DmaPSIZE::byte,
     DMA_SETUP::SPI_NDTR_VAL
 };
 
@@ -35,7 +38,57 @@ constexpr DmaStreamConfig dma1s4config { //SPI2 TX - FOR IMU
     DmaDirection::mem_to_per,
     DmaPriority::low,
     DmaMode::single,
+    DmaMSIZE::byte,
+    DmaPSIZE::byte,
     DMA_SETUP::SPI_NDTR_VAL
+};
+
+constexpr DmaStreamConfig dma2s1config { // TIM1 CH1 - FOR M1 MOTOR
+    PeripheralBaseAddr::DMA2_BASEADDR,
+    DMA_SETUP::STREAM_1,
+    DmaChannel::ch6,
+    DmaDirection::mem_to_per,
+    DmaPriority::very_high,
+    DmaMode::single,
+    DmaMSIZE::half_word,
+    DmaPSIZE::half_word,
+    DMA_SETUP::DSHOT_NDTR_VAL
+};
+
+constexpr DmaStreamConfig dma2s2config { // TIM1 CH2 - FOR M2 MOTOR
+    PeripheralBaseAddr::DMA2_BASEADDR,
+    DMA_SETUP::STREAM_2,
+    DmaChannel::ch6,
+    DmaDirection::mem_to_per,
+    DmaPriority::very_high,
+    DmaMode::single,
+    DmaMSIZE::half_word,
+    DmaPSIZE::half_word,
+    DMA_SETUP::DSHOT_NDTR_VAL
+};
+
+constexpr DmaStreamConfig dma2s6config { // TIM1 CH3 - FOR M3 MOTOR
+    PeripheralBaseAddr::DMA2_BASEADDR,
+    DMA_SETUP::STREAM_6,
+    DmaChannel::ch6,
+    DmaDirection::mem_to_per,
+    DmaPriority::very_high,
+    DmaMode::single,
+    DmaMSIZE::half_word,
+    DmaPSIZE::half_word,
+    DMA_SETUP::DSHOT_NDTR_VAL
+};
+
+constexpr DmaStreamConfig dma2s4config { // TIM1 CH4 - FOR M4 MOTOR
+    PeripheralBaseAddr::DMA2_BASEADDR,
+    DMA_SETUP::STREAM_4,
+    DmaChannel::ch6,
+    DmaDirection::mem_to_per,
+    DmaPriority::very_high,
+    DmaMode::single,
+    DmaMSIZE::half_word,
+    DmaPSIZE::half_word,
+    DMA_SETUP::DSHOT_NDTR_VAL
 };
 
 constexpr DmaStreamConfig dma2s5config { //UART1 RX - FOR ESP-RECEIVER
@@ -45,6 +98,8 @@ constexpr DmaStreamConfig dma2s5config { //UART1 RX - FOR ESP-RECEIVER
     DmaDirection::per_to_mem,
     DmaPriority::medium,
     DmaMode::double_buffer,
+    DmaMSIZE::byte,
+    DmaPSIZE::byte,
     DMA_SETUP::UART_NDTR_VAL
 };
 
@@ -53,8 +108,8 @@ constexpr DmaStreamConfig dma2s5config { //UART1 RX - FOR ESP-RECEIVER
 namespace IRQ_Config {
     using IRQFunc = void(*)(void);
 
-    inline DmaStreamHandle<dma1s3config>* volatile dma1s3 = nullptr;
-    inline DmaStreamHandle<dma2s5config>* volatile dma2s5 = nullptr;
+    inline DmaStreamHandle<dma1s3config, uint8_t>* volatile dma1s3 = nullptr;
+    inline DmaStreamHandle<dma2s5config, uint8_t>* volatile dma2s5 = nullptr;
     inline UsartHandle* uart1 = nullptr;
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
@@ -101,14 +156,55 @@ int main() {
     static GpioHandle gpioB(PeripheralBaseAddr::GPIOB_BASEADDR);
     static GpioHandle gpioC(PeripheralBaseAddr::GPIOC_BASEADDR);
 
-    static DmaStreamHandle<dma1s3config> dma1s3_spirx; //SPI_RX
-    static DmaStreamHandle<dma1s4config> dma1s4_spitx; //SPI_TX
-    static DmaStreamHandle<dma2s5config> dma2s5_uartrx; //UART_RX
+    static DmaStreamHandle<dma1s3config, uint8_t> dma1s3_spirx; //SPI_RX
+    static DmaStreamHandle<dma1s4config, uint8_t> dma1s4_spitx; //SPI_TX
+    static DmaStreamHandle<dma2s5config, uint8_t> dma2s5_uartrx; //UART_RX
+    static DmaStreamHandle<dma2s1config, uint16_t> dma2s1_m1; //TIM1_CH1
+    static DmaStreamHandle<dma2s2config, uint16_t> dma2s2_m2; //TIM1_CH2
+    static DmaStreamHandle<dma2s4config, uint16_t> dma2s4_m3; //TIM1_CH3
+    static DmaStreamHandle<dma2s6config, uint16_t> dma2s6_m4; //TIM1_CH4
 
     static SpiHandle spi2(PeripheralBaseAddr::SPI2_BASEADDR, &gpioB);
     static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
     
     static Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
+
+    static DShot m1;
+    static DShot m2;
+    static DShot m3;
+    static DShot m4;
+
+    m1.registerStreamEnableFunc([]() {
+        dma2s1_m1.enableStream();
+    });
+
+    m1.registerWritingFunc([](const uint16_t* src, size_t size) {
+        dma2s1_m1.writeToBuffer(src, size);
+    });
+
+    m2.registerStreamEnableFunc([]() {
+        dma2s2_m2.enableStream();
+    });
+
+    m2.registerWritingFunc([](const uint16_t* src, size_t size) {
+        dma2s2_m2.writeToBuffer(src, size);
+    });
+
+    m3.registerStreamEnableFunc([]() {
+        dma2s4_m3.enableStream();
+    });
+
+    m3.registerWritingFunc([](const uint16_t* src, size_t size) {
+        dma2s4_m3.writeToBuffer(src, size);
+    });
+
+    m4.registerStreamEnableFunc([]() {
+        dma2s6_m4.enableStream();
+    });
+
+    m4.registerWritingFunc([](const uint16_t* src, size_t size) {
+        dma2s6_m4.writeToBuffer(src, size);
+    });
 
     static Nvic nvic(PeripheralBaseAddr::NVIC_BASEADDR);
 
@@ -121,7 +217,6 @@ int main() {
 
     tim1.init();
     
-    
     static flightControlTaskContext flightControlTaskCtx {
         []() {
             dma1s4_spitx.disableStream();
@@ -131,7 +226,11 @@ int main() {
             dma1s4_spitx.enableStream();
         },
         spi2,
-        tim1
+        tim1,
+        m1,
+        m2,
+        m3,
+        m4
     };
 
     static receiverTaskContext receiverTaskCtx {

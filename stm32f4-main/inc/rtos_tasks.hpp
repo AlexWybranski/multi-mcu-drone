@@ -16,6 +16,7 @@
 #include "dronePacket.hpp" // IWYU pragma: keep
 #include "motors.hpp" // IWYU pragma: keep
 #include "pid.hpp" // IWYU pragma: keep
+#include "dshot.hpp"
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -41,6 +42,10 @@ struct flightControlTaskContext {
     DmaStreamManager dmaResetFunc;
     SpiHandle& spi_ptr;
     Tim1Handle& tim_ptr;
+    DShot& m1_ptr;
+    DShot& m2_ptr;
+    DShot& m3_ptr;
+    DShot& m4_ptr;
 };
 
 struct receiverTaskContext {

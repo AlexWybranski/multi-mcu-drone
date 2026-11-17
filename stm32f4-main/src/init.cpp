@@ -36,7 +36,11 @@ void initGpio(GpioHandle& gpioA, GpioHandle& gpioB, GpioHandle& gpioC) {
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH2);
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH3);
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH4);
-
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH1);
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH2);
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH3);
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH4);
+    
     gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::USART1_TX);
     gpioB.setPinMode(GpioHandle::Mode::alternateFunction, GPIOB_PINS::USART1_RX);
     gpioB.setPinAlternateFunction(GpioHandle::Func::AF07, GPIOB_PINS::USART1_TX);

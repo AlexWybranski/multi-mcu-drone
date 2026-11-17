@@ -6,6 +6,7 @@
 
 #include "dronePacket.hpp"
 #include "imu.hpp"
+#include "dshot.hpp"
 
 extern "C" {
     #include "FreeRTOS.h" // IWYU pragma: keep
@@ -61,6 +62,7 @@ namespace DMA_SETUP {
     //value for SxNDTR register (what is length of one transfer (according to MSIZE value))
     constexpr uint32_t UART_NDTR_VAL = sizeof(DroneControlPacket);
     constexpr uint32_t SPI_NDTR_VAL = 13U;
+    constexpr uint32_t DSHOT_NDTR_VAL = DSHOT::DSHOT_BUFFER_SIZE;
 
     //HIFCR and LIFCR
     static constexpr std::array<uint32_t, 8> CLEAR_TCF {
@@ -115,6 +117,18 @@ enum class DmaMode : uint32_t {
     double_buffer = 1,
 };
 
+enum class DmaMSIZE : uint32_t {
+    byte = (0b00U << 13U),
+    half_word = (0b01U << 13U),
+    word = (0b10U << 13U),
+};
+
+enum class DmaPSIZE : uint32_t {
+    byte = (0b00U << 11U),
+    half_word = (0b01U << 11U),
+    word = (0b10U << 11U),
+};
+
 struct DmaStreamConfig {
     uint32_t dmaBaseAddr;
     uint32_t streamNum;
@@ -122,6 +136,8 @@ struct DmaStreamConfig {
     DmaDirection direction;
     DmaPriority priority;
     DmaMode mode;
+    DmaMSIZE msize;
+    DmaPSIZE psize;
     size_t ndtrValue;
 };
 
@@ -145,15 +161,18 @@ struct DMA_regs {
     DMA_Stream_regs StreamRegs[8];
 };
 
-template<DmaStreamConfig config>
+/*
+    Remember to match T with MSIZE / PSIZE <- they need to be the same
+*/
+template<DmaStreamConfig config, typename T>
 class DmaStreamHandle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         DMA_regs* const m_DMA; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
         DMA_Stream_regs* const m_DMA_Stream;
 
-        std::array<volatile uint8_t, config.ndtrValue> bufferOne;
-        std::array<volatile uint8_t, config.ndtrValue> bufferTwo;
+        std::array<volatile T, config.ndtrValue> bufferOne;
+        std::array<volatile T, config.ndtrValue> bufferTwo;
 
         TaskHandle_t m_taskToNotify{};
     public:
@@ -179,7 +198,7 @@ class DmaStreamHandle {
 
             // Place imu read sequence to buffer to save time in task, rx stream will overwrite it when first read appears
             if (config.ndtrValue == LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH) {
-                std::memcpy(const_cast<uint8_t*>(bufferOne.data()), LSM6DS3::dataReadSequence.data(), config.ndtrValue);
+                std::memcpy(const_cast<T*>(bufferOne.data()), LSM6DS3::dataReadSequence.data(), config.ndtrValue);
             }
 
             m_DMA_Stream->SCR &= ~ENABLE;
@@ -224,18 +243,18 @@ class DmaStreamHandle {
             
         }
 
-        void writeToBuffer(const uint8_t* buffSrc, size_t size) {
+        void writeToBuffer(const T* buffSrc, size_t size) {
             if (size > config.ndtrValue) {
                 return;
             }
             if constexpr (config.mode == DmaMode::double_buffer) {
                 if (m_DMA_Stream->SCR & DMA_SETUP::CURRENT_TARGET) {
-                    std::memcpy(const_cast<uint8_t*>(bufferOne.data()), buffSrc, size);
+                    std::memcpy(const_cast<T*>(bufferOne.data()), buffSrc, size);
                 } else {
-                    std::memcpy(const_cast<uint8_t*>(bufferTwo.data()), buffSrc, size);
+                    std::memcpy(const_cast<T*>(bufferTwo.data()), buffSrc, size);
                 }
             } else if constexpr (config.mode == DmaMode::single) {
-                std::memcpy(const_cast<uint8_t*>(bufferOne.data()), buffSrc, size);
+                std::memcpy(const_cast<T*>(bufferOne.data()), buffSrc, size);
             }
         }
 

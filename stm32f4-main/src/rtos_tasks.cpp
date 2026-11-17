@@ -135,6 +135,10 @@ void flightControlTask(void* pvParameters) {
     auto* ctx = static_cast<flightControlTaskContext*>(pvParameters);
     auto& spi = ctx->spi_ptr;
     auto& tim = ctx->tim_ptr;
+    auto& m1 = ctx->m1_ptr;
+    auto& m2 = ctx->m2_ptr;
+    auto& m3 = ctx->m3_ptr;
+    auto& m4 = ctx->m4_ptr;
 
     std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData{};
     uint8_t* imuDataStartPtr = &imuData[1];
@@ -207,15 +211,35 @@ void flightControlTask(void* pvParameters) {
         }
 
         if(engineArmed) {
-            tim.setDutyCh1(motors.motor_1);
-            tim.setDutyCh2(motors.motor_2);
-            tim.setDutyCh3(motors.motor_3);
-            tim.setDutyCh4(motors.motor_4);
+            tim.disableDmaRequests();
+            m1.assembleDshotBuffer(motors.motor_1, true);
+            m2.assembleDshotBuffer(motors.motor_2, false);
+            m3.assembleDshotBuffer(motors.motor_3, false);
+            m4.assembleDshotBuffer(motors.motor_4, false);
+            m1.setupTransfer();
+            m2.setupTransfer();
+            m3.setupTransfer();
+            m4.setupTransfer();
+            m1.startTransfer();
+            m2.startTransfer();
+            m3.startTransfer();
+            m4.startTransfer();
+            tim.enableDmaRequests();
         } else {
-            tim.setDutyCh1(0U);
-            tim.setDutyCh2(0U);
-            tim.setDutyCh3(0U);
-            tim.setDutyCh4(0U);
+            tim.disableDmaRequests();
+            m1.assembleDshotBuffer(0, false);
+            m2.assembleDshotBuffer(0, false);
+            m3.assembleDshotBuffer(0, false);
+            m4.assembleDshotBuffer(0, false);
+            m1.setupTransfer();
+            m2.setupTransfer();
+            m3.setupTransfer();
+            m4.setupTransfer();
+            m1.startTransfer();
+            m2.startTransfer();
+            m3.startTransfer();
+            m4.startTransfer();
+            tim.enableDmaRequests();
         }
     }
 }

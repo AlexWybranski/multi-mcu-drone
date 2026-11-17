@@ -3,6 +3,7 @@
 #include <cstdint>
 
 namespace TIM_SETUP {
+    constexpr uint32_t CR1_ARPE = (0b1U << 7U);
     constexpr uint32_t CR1_CMS_EDGE_ALIGN_MODE = ~(0b11U << 5U);
     constexpr uint32_t CR1_CEN = (0b01U << 0U);
 
@@ -22,9 +23,9 @@ namespace TIM_SETUP {
 
     constexpr uint32_t BDTR_MOE = (0b1U << 15U);
 
-    constexpr uint32_t PSC_VAL = 47U;
+    constexpr uint32_t PSC_VAL = 0U;
 
-    constexpr uint32_t ARR_VAL = 2500U;
+    constexpr uint32_t ARR_VAL = 319U;
 
     constexpr uint16_t MAX_DUTY = static_cast<uint16_t>(ARR_VAL);
     constexpr uint32_t MAX_CHANNEL = 4;
@@ -86,10 +87,14 @@ class Tim1Handle {
 
         void init();
 
-        void setDutyCh1(uint16_t duty);
-        void setDutyCh2(uint16_t duty);
-        void setDutyCh3(uint16_t duty);
-        void setDutyCh4(uint16_t duty);
+        void enableDmaRequests();
+
+        void disableDmaRequests();
+
+        volatile uint32_t* getCh1Address();
+        volatile uint32_t* getCh2Address();
+        volatile uint32_t* getCh3Address();
+        volatile uint32_t* getCh4Address();
 };
 
 #endif

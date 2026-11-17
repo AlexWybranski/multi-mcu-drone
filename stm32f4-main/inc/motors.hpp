@@ -8,8 +8,8 @@
 #include "tim.hpp" // IWYU pragma: keep
 
 namespace MOTOR_SETUP {
-    static constexpr int16_t DUTY_MIN = 25U;
-    static constexpr int16_t DUTY_MAX = 475U;
+    static constexpr int16_t DUTY_MIN = 48U;
+    static constexpr int16_t DUTY_MAX = 2047U;
     static constexpr float YAW_LEFT_STEP = 32.0F;
     static constexpr float YAW_RIGHT_STEP = -32.0F;
 }
@@ -33,6 +33,8 @@ class MotorMixer {
     private:
         static inline float clamp(float val) {
             using namespace MOTOR_SETUP;
+
+            val = val * 4U;
 
             if (val > DUTY_MAX) {
                 val = DUTY_MAX;
