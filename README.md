@@ -2,7 +2,7 @@
 
 #### Disclaimer
 - Due to free profiles of HICPP and CPPCOREGUIDELINES in clang-tidy, this code is supposed to be taken as "HICPP-ish verified"
-- **Current State:** Firmware is tested on hardware prototype (most of that (branch feature-uart-for-esc is untested) has been written to this day (**5 Nov 2026**)), buck converter burned out and took esp32c6-receiver with itself 
+- **Current State:** Firmware is tested on hardware (most of that (branch feature-uart-for-esc is untested) as of (**18 Nov 2026**)), burned components has been replaced, but the ESC is damaged - parts are on their way. 
 
 ## System overview
 This firmware is written primarily in C++. The general description of the software modules for each specific board is detailed below (**Detailed overview of mcus' firmwares can be found in respective README files in mcu specific folders**):
