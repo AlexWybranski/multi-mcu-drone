@@ -17,7 +17,7 @@ namespace DSHOT {
     constexpr uint32_t THROTTLE_SHIFT = 5U;
     constexpr uint32_t TELEMETRY_SHIFT = 4U;
     constexpr uint32_t CRC_SHIFT = 0U;
-    constexpr std::size_t DSHOT_BUFFER_SIZE = 18U;
+    constexpr uint32_t DSHOT_BUFFER_SIZE = 18U;
 
     constexpr uint16_t T1H = static_cast<uint16_t>((TIM_SETUP::ARR_VAL+1U) * 0.75f);
     constexpr uint16_t T0H = static_cast<uint16_t>((TIM_SETUP::ARR_VAL+1U) * 0.375f);

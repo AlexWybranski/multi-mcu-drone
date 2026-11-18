@@ -16,8 +16,6 @@ void Tim1Handle::init() {
     m_TIM->BDTR = BDTR_MASK;
     m_TIM->PSC = PSC_VAL;
     m_TIM->ARR = ARR_VAL;
-
-    m_TIM->CR1 |= CR1_CEN;
 }
 
 void Tim1Handle::disableDmaRequests() {
@@ -26,6 +24,33 @@ void Tim1Handle::disableDmaRequests() {
 
 void Tim1Handle::enableDmaRequests() {
     m_TIM->DIER |= (0b1111U << 9U);
+}
+
+void Tim1Handle::disableTimer() {
+    m_TIM->CR1 &= ~TIM_SETUP::CR1_CEN;
+}
+
+void Tim1Handle::enableTimer() {
+    m_TIM->CR1 |= TIM_SETUP::CR1_CEN;
+}
+
+void Tim1Handle::disableTimDShot() {
+    disableTimer();
+    disableDmaRequests();
+
+    m_TIM->CCR1 = 0U;
+    m_TIM->CCR2 = 0U;
+    m_TIM->CCR3 = 0U;
+    m_TIM->CCR4 = 0U;
+
+    m_TIM->CNT = 0U;
+    m_TIM->EGR = (0b1U << 0U);
+    m_TIM->SR = 0U;
+}
+
+void Tim1Handle::enableTimDShot() {
+    enableTimer();
+    enableDmaRequests();
 }
 
 volatile uint32_t* Tim1Handle::getCh1Address() {

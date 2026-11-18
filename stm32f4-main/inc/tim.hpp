@@ -25,12 +25,8 @@ namespace TIM_SETUP {
 
     constexpr uint32_t PSC_VAL = 0U;
 
-    constexpr uint32_t ARR_VAL = 319U;
+    constexpr uint32_t ARR_VAL = 159U;
 
-    constexpr uint16_t MAX_DUTY = static_cast<uint16_t>(ARR_VAL);
-    constexpr uint32_t MAX_CHANNEL = 4;
-
-    constexpr uint16_t MINIMAL_DUTY_FOR_ESC = 1000U; // ESC takes 1000-2000us pulses
     constexpr uint16_t DUTY_MULTIPLIER = 2U;
 }
 
@@ -76,6 +72,12 @@ class Tim1Handle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         TIM1_regs* const m_TIM; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
+        void enableDmaRequests();
+        void enableTimer();
+    
+        void disableDmaRequests();
+        void disableTimer();
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
         explicit Tim1Handle(uint32_t baseAddr) : m_TIM(reinterpret_cast<TIM1_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -87,9 +89,8 @@ class Tim1Handle {
 
         void init();
 
-        void enableDmaRequests();
-
-        void disableDmaRequests();
+        void enableTimDShot();
+        void disableTimDShot();
 
         volatile uint32_t* getCh1Address();
         volatile uint32_t* getCh2Address();

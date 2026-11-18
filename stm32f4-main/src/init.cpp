@@ -66,4 +66,5 @@ void initGpio(GpioHandle& gpioA, GpioHandle& gpioB, GpioHandle& gpioC) {
     gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_MOSI);
 
     gpioC.setPinMode(GpioHandle::Mode::output, GPIOC_PINS::USER_DIODE);
+    gpioC.setPinState(true, GPIOC_PINS::USER_DIODE);
 }

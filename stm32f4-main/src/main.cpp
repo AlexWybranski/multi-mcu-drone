@@ -161,8 +161,8 @@ int main() {
     static DmaStreamHandle<dma2s5config, uint8_t> dma2s5_uartrx; //UART_RX
     static DmaStreamHandle<dma2s1config, uint16_t> dma2s1_m1; //TIM1_CH1
     static DmaStreamHandle<dma2s2config, uint16_t> dma2s2_m2; //TIM1_CH2
-    static DmaStreamHandle<dma2s4config, uint16_t> dma2s4_m3; //TIM1_CH3
-    static DmaStreamHandle<dma2s6config, uint16_t> dma2s6_m4; //TIM1_CH4
+    static DmaStreamHandle<dma2s6config, uint16_t> dma2s6_m3; //TIM1_CH3
+    static DmaStreamHandle<dma2s4config, uint16_t> dma2s4_m4; //TIM1_CH4
 
     static SpiHandle spi2(PeripheralBaseAddr::SPI2_BASEADDR, &gpioB);
     static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
@@ -191,19 +191,19 @@ int main() {
     });
 
     m3.registerStreamEnableFunc([]() {
-        dma2s4_m3.enableStream();
+        dma2s6_m3.enableStream();
     });
 
     m3.registerWritingFunc([](const uint16_t* src, size_t size) {
-        dma2s4_m3.writeToBuffer(src, size);
+        dma2s6_m3.writeToBuffer(src, size);
     });
 
     m4.registerStreamEnableFunc([]() {
-        dma2s6_m4.enableStream();
+        dma2s4_m4.enableStream();
     });
 
     m4.registerWritingFunc([](const uint16_t* src, size_t size) {
-        dma2s6_m4.writeToBuffer(src, size);
+        dma2s4_m4.writeToBuffer(src, size);
     });
 
     static Nvic nvic(PeripheralBaseAddr::NVIC_BASEADDR);
@@ -245,6 +245,10 @@ int main() {
     dma1s3_spirx.init(spi2.getDataRegAddr(), flightControlTaskPtr);
     dma1s4_spitx.init(spi2.getDataRegAddr(), nullptr);
     dma2s5_uartrx.init(uart1.getDataRegAddr(), receiverTaskPtr);
+    dma2s1_m1.init(tim1.getCh1Address(), nullptr);
+    dma2s2_m2.init(tim1.getCh2Address(), nullptr);
+    dma2s6_m3.init(tim1.getCh3Address(), nullptr);
+    dma2s4_m4.init(tim1.getCh4Address(), nullptr);
     
     spi2.init(GPIOB_PINS::SPI2_SCS);
     uart1.init();

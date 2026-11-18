@@ -171,8 +171,8 @@ class DmaStreamHandle {
         DMA_regs* const m_DMA; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
         DMA_Stream_regs* const m_DMA_Stream;
 
-        std::array<volatile T, config.ndtrValue> bufferOne;
-        std::array<volatile T, config.ndtrValue> bufferTwo;
+        std::array<volatile T, config.ndtrValue> bufferOne{};
+        std::array<volatile T, config.ndtrValue> bufferTwo{};
 
         TaskHandle_t m_taskToNotify{};
     public:
@@ -211,6 +211,8 @@ class DmaStreamHandle {
                 static_cast<uint32_t>(config.channel) |
                 static_cast<uint32_t>(config.direction) |
                 static_cast<uint32_t>(config.priority) |
+                static_cast<uint32_t>(config.msize) |
+                static_cast<uint32_t>(config.psize) |
                 //constant bits to all used configurations
                 MINC_ON |
                 TCIE
@@ -249,16 +251,21 @@ class DmaStreamHandle {
             }
             if constexpr (config.mode == DmaMode::double_buffer) {
                 if (m_DMA_Stream->SCR & DMA_SETUP::CURRENT_TARGET) {
-                    std::memcpy(const_cast<T*>(bufferOne.data()), buffSrc, size);
+                    std::memcpy(const_cast<T*>(bufferOne.data()), buffSrc, (size*sizeof(T)));
                 } else {
-                    std::memcpy(const_cast<T*>(bufferTwo.data()), buffSrc, size);
+                    std::memcpy(const_cast<T*>(bufferTwo.data()), buffSrc, (size*sizeof(T)));
                 }
             } else if constexpr (config.mode == DmaMode::single) {
-                std::memcpy(const_cast<T*>(bufferOne.data()), buffSrc, size);
+                std::memcpy(const_cast<T*>(bufferOne.data()), buffSrc, (size*sizeof(T)));
             }
         }
 
         void enableStream() {
+            if((m_DMA_Stream->SCR & DMA_SETUP::ENABLE )!= 0U) {
+                while ((m_DMA_Stream->SCR & DMA_SETUP::ENABLE )!= 0U) {
+                
+                }
+            }
             if constexpr (config.mode == DmaMode::single) {
                 m_DMA_Stream->SM0AR = std::bit_cast<uint32_t>(bufferOne.data());
             }
