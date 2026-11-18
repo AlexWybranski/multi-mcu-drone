@@ -8,8 +8,8 @@
 This firmware is written primarily in C++. The general description of the software modules for each specific board is detailed below (**Detailed overview of mcus' firmwares can be found in respective README files in mcu specific folders**):
 
 - [esp32c6-rc](esp32c6-rc/) - Remote control module; handles gamepad input and transmits data wirelessly to the drone via the ESP-NOW protocol.
-- [esp32c6-receiver](esp32c6-receiver/) - Receiver module; captures ESP-NOW packets, forwards them to the [stm32f4-main](stm32f4-main/) module via UART, and generates PWM signal for camera servo control.
-- [stm32f4-main](stm32f4-main/) - Flight controller; Main core of the drone. Runs a **completely custom-written HAL layer (bare-metal drivers, custom startup code, and self written linker script) and tailor-made DMA IRQs (more in [README file](stm32f4-main/README.md))**. Receives packets via **UART with DMA**. Calculates PID, handle motor mixer logic and generates high-frequency PWM duty cycles based on gamepad input and SPI-sampled IMU data (accelerometer/gyroscope).
+- [esp32c6-receiver](esp32c6-receiver/) - Receiver module; captures ESP-NOW packets and forwards them to the [stm32f4-main](stm32f4-main/) module via UART.
+- [stm32f4-main](stm32f4-main/) - Flight controller; Main core of the drone. Runs a **completely custom-written HAL layer (bare-metal drivers, custom startup code, and self written linker script) and tailor-made DMA IRQs (more in [README file](stm32f4-main/README.md))**. Receives packets via **UART with DMA**. Calculates PID, handle motor mixer logic and generates DShot300 signal via PWM duty cycles based on gamepad input and SPI-sampled IMU data (accelerometer/gyroscope).
 
 ## Data flow
 ```mermaid
