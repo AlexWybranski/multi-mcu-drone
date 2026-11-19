@@ -27,7 +27,7 @@ namespace ConstantValues {
     constexpr int32_t NEUTRAL_AXIS_VAL = 128U;
 
     constexpr size_t MAC_LENGTH = 6U; 
-    constexpr std::array<uint8_t, MAC_LENGTH> RECEIVER_MAC = {0x10,0xBD,0xA3,0x90,0xE2,0xB8};
+    constexpr std::array<uint8_t, MAC_LENGTH> RECEIVER_MAC = {0x90,0x64,0x9B,0xAB,0x30,0x8C};
 
     constexpr uint32_t PACKET_DATA_SIZE = 4U;
     constexpr size_t PACKET_SIZE = sizeof(DroneControlPacket);
@@ -54,6 +54,8 @@ namespace ConstantValues {
 
     constexpr uint16_t MIN_BATTERY_LEVEL = 3400U;
     constexpr uint32_t BAT_LOW_LED_FREQ = 1000U;
+
+    constexpr uint8_t IGNORE_ARMING_COUNTER_LIMIT = 100U;
 };
 
 namespace ButtonMasks {
@@ -88,6 +90,9 @@ class RemoteControl {
         
         static inline DroneControlPacket m_currentPacket;
         static inline DroneControlPacket m_sharedPacket;
+        static inline uint8_t m_prevButtonReg{};
+        static inline bool m_reactToArm{true};
+        static inline uint8_t m_ignoreArmingCounter{};
         static inline std::mutex m_packetMutex;
         
         static inline esp_now_peer_info_t m_peer;

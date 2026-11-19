@@ -123,7 +123,7 @@ namespace IRQ_Config {
 
     inline DmaStreamHandle<dma1s3config, uint8_t>* volatile dma1s3 = nullptr;
     inline DmaStreamHandle<dma2s5config, uint8_t>* volatile dma2s5 = nullptr;
-    inline DmaStreamHandle<dma2s5config, uint8_t>* volatile dma2s5 = nullptr;
+    inline DmaStreamHandle<dma1s5config, uint8_t>* volatile dma1s5 = nullptr;
     inline UsartHandle* uart1 = nullptr;
     inline UsartHandle* uart2 = nullptr;
 }

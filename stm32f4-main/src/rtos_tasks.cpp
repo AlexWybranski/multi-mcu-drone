@@ -21,12 +21,13 @@ namespace {
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 // DEBUG
-uint16_t duty_m1, duty_m2, duty_m3, duty_m4;
-uint16_t debug_engineArm;
-uint16_t debug_throttle;
-int16_t debug_pitch;
-int16_t debug_roll;
-uint8_t debug_buttonReg;
+uint16_t duty_m1{}, duty_m2{}, duty_m3{}, duty_m4{};
+uint16_t debug_engineArm{};
+uint16_t debug_throttle{};
+int16_t debug_pitch{};
+int16_t debug_roll{};
+uint8_t debug_buttonReg{};
+uint16_t debug_batteryLevel{};
 
 TaskHandle_t getReceiverTaskHandle() {
     return receiverTaskHandle;
@@ -254,10 +255,10 @@ void flightControlTask(void* pvParameters) {
             duty_m3 = motors.motor_3;
             duty_m4 = motors.motor_4;
         } else {
-            m1.assembleDshotBuffer(0, false);
-            m2.assembleDshotBuffer(0, false);
-            m3.assembleDshotBuffer(0, false);
-            m4.assembleDshotBuffer(0, false);
+            m1.assembleDshotBuffer(0U, false);
+            m2.assembleDshotBuffer(0U, false);
+            m3.assembleDshotBuffer(0U, false);
+            m4.assembleDshotBuffer(0U, false);
 
             duty_m1 = 0U;
             duty_m2 = 0U;
@@ -309,10 +310,10 @@ void failsafeTask(void* pvParameters) {
 void telemetryTask(void *pvParameters) {
     static_cast<void>(pvParameters);
 
-    KissTelemetry escTelemetry;
-    uint32_t rawDataAddress;
-    uint8_t* rawDataPtr;
-    uint16_t batteryLevel;
+    KissTelemetry escTelemetry{};
+    uint32_t rawDataAddress{};
+    uint8_t* rawDataPtr{};
+    uint16_t batteryLevel{};
 
     while (1) {
         if (xTaskNotifyWait(
@@ -328,6 +329,7 @@ void telemetryTask(void *pvParameters) {
             taskEXIT_CRITICAL();
 
             batteryLevel = static_cast<uint16_t>((escTelemetry.voltage_h << 8U) | (escTelemetry.voltage_l << 0U));
+            debug_batteryLevel = batteryLevel;
 
             if (batteryLevel < 1450) {
                 xTaskNotifyGive(failsafeTaskHandle);

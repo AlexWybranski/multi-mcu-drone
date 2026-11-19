@@ -28,14 +28,28 @@ void RemoteControl::calculateCRC(DroneControlPacket* dronePacket) {
 }
 
 DroneControlPacket RemoteControl::getAndClearPacket() {
+    using namespace ConstantValues;
+
     DroneControlPacket packet;
 
     {
-        using namespace ConstantValues;
         std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
         packet = m_sharedPacket;
-        m_sharedPacket.crcValue = 0;
+        m_sharedPacket.crcValue = 0U;
     }
+
+    if ((m_prevButtonReg & ControlRegister::START_STOP_ENGINE) && (packet.controlData.buttonControlReg & ControlRegister::START_STOP_ENGINE)) {
+        m_reactToArm = false;
+    }
+    if (!m_reactToArm) {
+        packet.controlData.buttonControlReg &= ~ControlRegister::START_STOP_ENGINE;
+        m_ignoreArmingCounter++;
+    }
+    if (m_ignoreArmingCounter > IGNORE_ARMING_COUNTER_LIMIT) {
+        m_reactToArm = true;
+        m_ignoreArmingCounter = 0U;
+    }
+    m_prevButtonReg = packet.controlData.buttonControlReg;
 
     return packet;
 }
