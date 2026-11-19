@@ -5,6 +5,7 @@ void initClocks(RccHandle& rcc) {
 
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOAEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOBEN);
+    rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::GPIOCEN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::DMA2EN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::DMA1EN);
     rcc.enableAHB1PeripheralClock(AHB1_PERIPHERAL_BITS::CRCEN);
@@ -29,7 +30,7 @@ void initIRQs(Nvic& nvic) {
     nvic.setIrqPriority(NVIC_IRQs::USART2_IRQ, NVIC_IRQs::USART2_IRQ_Priority);
 }
 
-void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
+void initGpio(GpioHandle& gpioA, GpioHandle& gpioB, GpioHandle& gpioC) {
     gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH1);
     gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH2);
     gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::T1_CH3);
@@ -38,7 +39,10 @@ void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH2);
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH3);
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF01, GPIOA_PINS::T1_CH4);
-
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH1);
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH2);
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH3);
+    gpioA.setPinOutputSpeed(GpioHandle::Speed::fast, GPIOA_PINS::T1_CH4);
     gpioA.setPinMode(GpioHandle::Mode::alternateFunction, GPIOA_PINS::USART2_RX);
     gpioA.setPinAlternateFunction(GpioHandle::Func::AF07, GPIOA_PINS::USART2_RX);
     gpioA.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOA_PINS::USART2_RX);
@@ -67,4 +71,7 @@ void initGpio(GpioHandle& gpioA, GpioHandle& gpioB) {
     gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_SCK);
     gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_MISO);
     gpioB.setPinPullupPulldown(GpioHandle::Pull::pullup, GPIOB_PINS::SPI2_MOSI);
+
+    gpioC.setPinMode(GpioHandle::Mode::output, GPIOC_PINS::USER_DIODE);
+    gpioC.setPinState(true, GPIOC_PINS::USER_DIODE);
 }

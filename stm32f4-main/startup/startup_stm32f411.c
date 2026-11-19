@@ -88,7 +88,6 @@ void FPU_IRQHandler(void)                   __attribute__((weak, alias("Default_
 void SPI4_IRQHandler(void)                  __attribute__((weak, alias("Default_Handler")));
 void SPI5_IRQHandler(void)                  __attribute__((weak, alias("Default_Handler")));
 
-//vector table
 uint32_t vector_table[] __attribute__((section (".isr_vector"))) = {
     _ESTACK,
     (uint32_t)(uintptr_t)&Reset_Handler,

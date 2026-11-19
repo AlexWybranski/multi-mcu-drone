@@ -7,13 +7,16 @@
 #include <atomic> // IWYU pragma: keep
 
 #include "crc.hpp" // IWYU pragma: keep
-#include "dronePacket.hpp" // IWYU pragma: keep
 #include "dma.hpp" // IWYU pragma: keep
 #include "spi.hpp"
 #include "imu.hpp" // IWYU pragma: keep
 #include "tim.hpp" // IWYU pragma: keep
+#include "gpio.hpp" // IWYU pragma: keep
+
+#include "dronePacket.hpp" // IWYU pragma: keep
 #include "motors.hpp" // IWYU pragma: keep
 #include "pid.hpp" // IWYU pragma: keep
+#include "dshot.hpp"
 #include "kiss_telemetry.hpp" // IWYU pragma: keep
 
 extern "C" {
@@ -42,9 +45,17 @@ struct flightControlTaskContext {
     DmaStreamManager dmaResetFunc;
     SpiHandle& spi_ptr;
     Tim1Handle& tim_ptr;
+    DShot& m1_ptr;
+    DShot& m2_ptr;
+    DShot& m3_ptr;
+    DShot& m4_ptr;
 };
 
-void initTasks(flightControlTaskContext* flightControlTaskCtx);
+struct receiverTaskContext {
+    GpioHandle& gpio_ptr;
+};
+
+void initTasks(flightControlTaskContext* flightControlTaskCtx, receiverTaskContext* receiverTaskCtx);
 
 void receiverTask(void* pvParameters);
 void flightControlTask(void* pvParameters);

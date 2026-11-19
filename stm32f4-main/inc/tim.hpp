@@ -3,7 +3,8 @@
 #include <cstdint>
 
 namespace TIM_SETUP {
-    constexpr uint32_t CR1_CMS_CENTER_MODE_1 = (0b01U << 5U);
+    constexpr uint32_t CR1_ARPE = (0b1U << 7U);
+    constexpr uint32_t CR1_CMS_EDGE_ALIGN_MODE = ~(0b11U << 5U);
     constexpr uint32_t CR1_CEN = (0b01U << 0U);
 
     constexpr uint32_t CCMR1_CH1_PRELOAD_ENABLE = (0b1U << 3U);
@@ -24,10 +25,9 @@ namespace TIM_SETUP {
 
     constexpr uint32_t PSC_VAL = 0U;
 
-    constexpr uint32_t ARR_VAL = 500U;
+    constexpr uint32_t ARR_VAL = 159U;
 
-    constexpr uint16_t MAX_DUTY = static_cast<uint16_t>(ARR_VAL);
-    constexpr uint32_t MAX_CHANNEL = 4;
+    constexpr uint16_t DUTY_MULTIPLIER = 2U;
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
@@ -57,8 +57,12 @@ struct TIM1_regs {
 /*
     PWM spec:
     - Center aligned wave
-    - ARR - Max counter value
-    - PSC - 
+    - ARR - Max counter value (2000us)
+    - PSC - 47 + 1 -> 48 -> gives 1 tick = 1 us
+    - Freq - 400 Hz
+    
+    As a reminder:
+        Freq = Fclk / (PSC + 1) * ARR
 */
 
 /*
@@ -68,6 +72,12 @@ class Tim1Handle {
     private:
         //NOLINT used to ensure the peripheral's base address pointer remain constant
         TIM1_regs* const m_TIM; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+
+        void enableDmaRequests();
+        void enableTimer();
+    
+        void disableDmaRequests();
+        void disableTimer();
     public:
         //reinterpret_cast is needed to map hardware register to code, NOLINT used
         explicit Tim1Handle(uint32_t baseAddr) : m_TIM(reinterpret_cast<TIM1_regs*>(baseAddr)) {} // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -79,10 +89,13 @@ class Tim1Handle {
 
         void init();
 
-        void setDutyCh1(uint16_t duty);
-        void setDutyCh2(uint16_t duty);
-        void setDutyCh3(uint16_t duty);
-        void setDutyCh4(uint16_t duty);
+        void enableTimDShot();
+        void disableTimDShot();
+
+        volatile uint32_t* getCh1Address();
+        volatile uint32_t* getCh2Address();
+        volatile uint32_t* getCh3Address();
+        volatile uint32_t* getCh4Address();
 };
 
 #endif

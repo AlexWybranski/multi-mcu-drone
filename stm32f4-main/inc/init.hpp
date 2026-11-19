@@ -10,6 +10,6 @@ void initClocks(RccHandle& rcc);
 
 void initIRQs(Nvic& nvic);
 
-void initGpio(GpioHandle& gpioA, GpioHandle& gpioB);
+void initGpio(GpioHandle& gpioA, GpioHandle& gpioB, GpioHandle& gpioC);
 
 #endif

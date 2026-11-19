@@ -20,6 +20,14 @@ namespace {
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
+// DEBUG
+uint16_t duty_m1, duty_m2, duty_m3, duty_m4;
+uint16_t debug_engineArm;
+uint16_t debug_throttle;
+int16_t debug_pitch;
+int16_t debug_roll;
+uint8_t debug_buttonReg;
+
 TaskHandle_t getReceiverTaskHandle() {
     return receiverTaskHandle;
 }
@@ -39,18 +47,18 @@ TaskHandle_t getTelemetryTaskHandle() {
 //global variable secured by atomic and critical sections
 //NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 namespace {
-    std::atomic<uint32_t> rawPacket{0};
+    std::atomic<uint32_t> rawPacket{0U};
     std::atomic<bool> g_hasLanded{false};
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
-void initTasks(flightControlTaskContext* flightControlTaskCtx) {
+void initTasks(flightControlTaskContext* flightControlTaskCtx, receiverTaskContext* receiverTaskCtx) {
     receiverTaskHandle = xTaskCreateStatic
     (
         receiverTask,
         "receiverTask",
         RTOS_INFO::RECEIVER_TASK_STACK_DEPTH,
-        nullptr,
+        receiverTaskCtx,
         RTOS_INFO::RECEIVER_TASK_PRIORITY,
         receiverTaskStack.data(),
         &receiverTaskBuffer
@@ -90,7 +98,9 @@ void initTasks(flightControlTaskContext* flightControlTaskCtx) {
 }
 
 void receiverTask(void* pvParameters) {
-    static_cast<void>(pvParameters);
+    auto* ctx = static_cast<receiverTaskContext*>(pvParameters);
+
+    auto& gpio = ctx->gpio_ptr;
 
     uint32_t rawDataAddress{0};
     uint8_t* rawDataPtr{nullptr};
@@ -118,6 +128,7 @@ void receiverTask(void* pvParameters) {
             if (crc == receivedPacket.crcValue) {
                 if (!isInitialized) {
                     isInitialized = true;
+                    gpio.setPinState(false, GPIOC_PINS::USER_DIODE);
                 }
                 badPacketsCounter = (badPacketsCounter > 0) ? badPacketsCounter - 1 : 0;
 
@@ -125,7 +136,7 @@ void receiverTask(void* pvParameters) {
                     xTaskNotifyGive(failsafeTaskHandle);
                 }
 
-                //update global control
+                //update global control packet
                 rawPacket.store(std::bit_cast<uint32_t>(receivedPacket.controlData));
                 
             } else {
@@ -149,6 +160,10 @@ void flightControlTask(void* pvParameters) {
     auto* ctx = static_cast<flightControlTaskContext*>(pvParameters);
     auto& spi = ctx->spi_ptr;
     auto& tim = ctx->tim_ptr;
+    auto& m1 = ctx->m1_ptr;
+    auto& m2 = ctx->m2_ptr;
+    auto& m3 = ctx->m3_ptr;
+    auto& m4 = ctx->m4_ptr;
 
     std::array<uint8_t, DMA_SETUP::SPI_NDTR_VAL> imuData{};
     uint8_t* imuDataStartPtr = &imuData[1];
@@ -186,11 +201,16 @@ void flightControlTask(void* pvParameters) {
         
         spi.DMAendTransfer();
         
-        packet = std::bit_cast<DroneControlData>(rawPacket.load());
-        
         taskENTER_CRITICAL();
             std::memcpy(imuData.data(), std::bit_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
         taskEXIT_CRITICAL();
+
+        packet = std::bit_cast<DroneControlData>(rawPacket.load());
+
+        debug_throttle = packet.throttle;
+        debug_roll = packet.roll;
+        debug_pitch = packet.pitch;
+        debug_buttonReg = packet.buttonControlReg;
 
         std::memcpy(&imuDataRaw, imuDataStartPtr, sizeof(ImuTelemetry));
 
@@ -220,17 +240,39 @@ void flightControlTask(void* pvParameters) {
             pid.resetIntegrals();
         }
 
+        debug_engineArm = static_cast<uint16_t>(static_cast<uint8_t>(engineArmed));
+
+        tim.disableTimDShot();
         if(engineArmed) {
-            tim.setDutyCh1(motors.motor_1);
-            tim.setDutyCh2(motors.motor_2);
-            tim.setDutyCh3(motors.motor_3);
-            tim.setDutyCh4(motors.motor_4);
+            m1.assembleDshotBuffer(motors.motor_1, false);
+            m2.assembleDshotBuffer(motors.motor_2, false);
+            m3.assembleDshotBuffer(motors.motor_3, false);
+            m4.assembleDshotBuffer(motors.motor_4, false);
+            // DEBUG
+            duty_m1 = motors.motor_1;
+            duty_m2 = motors.motor_2;
+            duty_m3 = motors.motor_3;
+            duty_m4 = motors.motor_4;
         } else {
-            tim.setDutyCh1(0);
-            tim.setDutyCh2(0);
-            tim.setDutyCh3(0);
-            tim.setDutyCh4(0);
+            m1.assembleDshotBuffer(0, false);
+            m2.assembleDshotBuffer(0, false);
+            m3.assembleDshotBuffer(0, false);
+            m4.assembleDshotBuffer(0, false);
+
+            duty_m1 = 0U;
+            duty_m2 = 0U;
+            duty_m3 = 0U;
+            duty_m4 = 0U;
         }
+        m1.setupTransfer();
+        m2.setupTransfer();
+        m3.setupTransfer();
+        m4.setupTransfer();
+        m1.startTransfer();
+        m2.startTransfer();
+        m3.startTransfer();
+        m4.startTransfer();
+        tim.enableTimDShot();
     }
 }
 

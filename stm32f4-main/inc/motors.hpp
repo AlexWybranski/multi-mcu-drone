@@ -5,13 +5,13 @@
 
 #include "dronePacket.hpp"
 #include "pid.hpp"
-#include "tim.hpp"
+#include "tim.hpp" // IWYU pragma: keep
 
 namespace MOTOR_SETUP {
-    static constexpr int16_t DUTY_MIN = 25U;
-    static constexpr int16_t DUTY_MAX = TIM_SETUP::MAX_DUTY - 25U;
-    static constexpr int16_t YAW_LEFT_STEP = 32U;
-    static constexpr int16_t YAW_RIGHT_STEP = -32;
+    static constexpr int16_t DUTY_MIN = 48U;
+    static constexpr int16_t DUTY_MAX = 2047U;
+    static constexpr float YAW_LEFT_STEP = 32.0F;
+    static constexpr float YAW_RIGHT_STEP = -32.0F;
 }
 
 struct MotorInputs {
@@ -33,6 +33,8 @@ class MotorMixer {
     private:
         static inline float clamp(float val) {
             using namespace MOTOR_SETUP;
+
+            val = val * 4U;
 
             if (val > DUTY_MAX) {
                 val = DUTY_MAX;

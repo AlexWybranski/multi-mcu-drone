@@ -6,6 +6,7 @@
 namespace PeripheralBaseAddr {
     constexpr uint32_t GPIOA_BASEADDR = 0x40020000U; 
     constexpr uint32_t GPIOB_BASEADDR = 0x40020400U; 
+    constexpr uint32_t GPIOC_BASEADDR = 0x40020800U;
     constexpr uint32_t TIM1_BASEADDR = 0x40010000U;
     constexpr uint32_t RCC_BASEADDR = 0x40023800U;
     constexpr uint32_t SPI2_BASEADDR = 0x40003800U;
@@ -44,6 +45,7 @@ namespace AHB1_PERIPHERAL_BITS {
     constexpr uint32_t DMA2EN = 22U;
     constexpr uint32_t DMA1EN = 21U;
     constexpr uint32_t CRCEN = 12U;
+    constexpr uint32_t GPIOCEN = 2U;
     constexpr uint32_t GPIOBEN = 1U;
     constexpr uint32_t GPIOAEN = 0U;
 }
@@ -74,6 +76,10 @@ namespace GPIOB_PINS {
     constexpr uint32_t SPI2_SCK = 13U;
     constexpr uint32_t SPI2_MISO = 14U;
     constexpr uint32_t SPI2_MOSI = 15U;
+}
+
+namespace GPIOC_PINS {
+    constexpr uint32_t USER_DIODE = 13U;
 }
 
 #endif
