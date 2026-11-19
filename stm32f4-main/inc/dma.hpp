@@ -284,6 +284,10 @@ class DmaStreamHandle {
             m_DMA_Stream->SCR &= ~DMA_SETUP::ENABLE;
         }
 
+        /*
+            This function checks if whole transfer is finished (DMA resets NDTR counter after 
+            all data has been moved to/from memory, but does it before generating TC flag)
+        */
         bool checkBuffer() {
             if (m_DMA_Stream->SNDTR != config.ndtrValue) {
                 return false;

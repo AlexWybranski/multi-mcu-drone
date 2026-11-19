@@ -20,7 +20,8 @@ namespace {
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
-// DEBUG
+// DEBUG VARIABLES
+//NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 uint16_t duty_m1{}, duty_m2{}, duty_m3{}, duty_m4{};
 uint16_t debug_engineArm{};
 uint16_t debug_throttle{};
@@ -28,6 +29,7 @@ int16_t debug_pitch{};
 int16_t debug_roll{};
 uint8_t debug_buttonReg{};
 uint16_t debug_batteryLevel{};
+//NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 TaskHandle_t getReceiverTaskHandle() {
     return receiverTaskHandle;
@@ -310,6 +312,8 @@ void failsafeTask(void* pvParameters) {
 void telemetryTask(void *pvParameters) {
     static_cast<void>(pvParameters);
 
+    constexpr uint16_t BATTERY_LOW_THRESHOLD = 1450U;
+
     KissTelemetry escTelemetry{};
     uint32_t rawDataAddress{};
     uint8_t* rawDataPtr{};
@@ -331,7 +335,7 @@ void telemetryTask(void *pvParameters) {
             batteryLevel = static_cast<uint16_t>((escTelemetry.voltage_h << 8U) | (escTelemetry.voltage_l << 0U));
             debug_batteryLevel = batteryLevel;
 
-            if (batteryLevel < 1450) {
+            if (batteryLevel < BATTERY_LOW_THRESHOLD) {
                 xTaskNotifyGive(failsafeTaskHandle);
             }
         }

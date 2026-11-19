@@ -13,7 +13,7 @@ uint32_t calculateCRC(uint32_t value) {
 
     l_CRC->DR = value;
 
-    vTaskDelay(4);
+    vTaskDelay(4U);
 
     calculatedCRC = l_CRC->DR;
 

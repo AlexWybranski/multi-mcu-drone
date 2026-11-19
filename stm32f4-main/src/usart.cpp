@@ -41,9 +41,9 @@ volatile uint32_t* UsartHandle::getDataRegAddr() {
 
 void UsartHandle::enableIdleLineInterrupt() {
     m_USART->CR1 &= ~USART_SETUP::CR1_UE;
-
-    for (int i = 0; i < 10; ++i) {
-        // Wait for usart peripheral to disable
+ 
+    for (uint32_t i = 0U; i < 10U; ++i) { //NOLINT(cppcoreguidelines-avoid-magic-numbers)
+        // Wait 10 ticks for usart peripheral to disable
     }
 
     m_USART->CR1 |= USART_SETUP::CR1_IDLEIE;

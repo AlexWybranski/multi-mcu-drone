@@ -27,6 +27,8 @@ namespace TIM_SETUP {
 
     constexpr uint32_t ARR_VAL = 159U;
 
+    constexpr uint32_t ALL_CHANNEL_DMA_REQ_EN = (0b1111U << 9U);
+
     constexpr uint16_t DUTY_MULTIPLIER = 2U;
 }
 

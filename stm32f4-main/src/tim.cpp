@@ -19,11 +19,11 @@ void Tim1Handle::init() {
 }
 
 void Tim1Handle::disableDmaRequests() {
-    m_TIM->DIER &= ~(0b1111U << 9U);
+    m_TIM->DIER &= ~TIM_SETUP::ALL_CHANNEL_DMA_REQ_EN;
 }
 
 void Tim1Handle::enableDmaRequests() {
-    m_TIM->DIER |= (0b1111U << 9U);
+    m_TIM->DIER |= TIM_SETUP::ALL_CHANNEL_DMA_REQ_EN;
 }
 
 void Tim1Handle::disableTimer() {

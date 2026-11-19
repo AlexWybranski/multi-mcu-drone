@@ -73,6 +73,7 @@ void SpiHandle::POLLread_write(const uint8_t* txBuff, uint8_t* rxBuff, std::size
 
     GPIO_ptr->setPinState(false, m_CS_PIN);
 
+    //NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     for (uint32_t i = 0; i < static_cast<uint32_t>(size); ++i) {
         while (!(m_SPI->SR & SR_TXE)) {}
 
@@ -86,6 +87,7 @@ void SpiHandle::POLLread_write(const uint8_t* txBuff, uint8_t* rxBuff, std::size
             rxBuff[i] = static_cast<uint8_t>(rxDummy);
         }
     }
+    //NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     while (m_SPI->SR & SR_BSY) {}
 
