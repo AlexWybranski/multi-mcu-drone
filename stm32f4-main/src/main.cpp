@@ -18,6 +18,7 @@ extern "C" {
 #include "dshot.hpp"
 #include "init.hpp"
 #include "rtos_tasks.hpp"
+#include "kiss_telemetry.hpp"
 
 constexpr DmaStreamConfig dma1s3config { //SPI2 RX - FOR IMU
     PeripheralBaseAddr::DMA1_BASEADDR,
@@ -91,6 +92,18 @@ constexpr DmaStreamConfig dma2s4config { // TIM1 CH4 - FOR M4 MOTOR
     DMA_SETUP::DSHOT_NDTR_VAL
 };
 
+constexpr DmaStreamConfig dma1s5config { //TELEMETRY RX
+    PeripheralBaseAddr::DMA1_BASEADDR,
+    DMA_SETUP::STREAM_5,
+    DmaChannel::ch4,
+    DmaDirection::per_to_mem,
+    DmaPriority::medium,
+    DmaMode::double_buffer,
+    DmaMSIZE::byte,
+    DmaPSIZE::byte,
+    sizeof(KissTelemetry)
+};
+
 constexpr DmaStreamConfig dma2s5config { //UART1 RX - FOR ESP-RECEIVER
     PeripheralBaseAddr::DMA2_BASEADDR,
     DMA_SETUP::STREAM_5,
@@ -110,7 +123,9 @@ namespace IRQ_Config {
 
     inline DmaStreamHandle<dma1s3config, uint8_t>* volatile dma1s3 = nullptr;
     inline DmaStreamHandle<dma2s5config, uint8_t>* volatile dma2s5 = nullptr;
+    inline DmaStreamHandle<dma2s5config, uint8_t>* volatile dma2s5 = nullptr;
     inline UsartHandle* uart1 = nullptr;
+    inline UsartHandle* uart2 = nullptr;
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
@@ -136,15 +151,21 @@ extern "C" {
         }
     }
 
+    void DMA1_Stream5_IRQHandler() { //TELEMETRY_RX
+        if (IRQ_Config::dma1s5 != nullptr) {
+            IRQ_Config::dma1s5->handleIRQ();
+        }
+    }
+
     void DMA2_Stream5_IRQHandler() { //UART_RX
         if (IRQ_Config::dma2s5 != nullptr) {
             IRQ_Config::dma2s5->handleIRQ();
         }
     }
 
-    void USART1_IRQHandler() {
-        if (IRQ_Config::uart1 != nullptr) {
-            IRQ_Config::uart1->handleIRQ();
+    void USART2_IRQHandler() {
+        if (IRQ_Config::uart2 != nullptr) {
+            IRQ_Config::uart2->handleIRQ();
         }
     }
 } //NOLINTEND(cppcoreguidelines-avoid-magic-numbers, cppcoreguidelines-pro-bounds-array-to-pointer-decay,hicpp-no-array-decay)
@@ -163,9 +184,11 @@ int main() {
     static DmaStreamHandle<dma2s2config, uint16_t> dma2s2_m2; //TIM1_CH2
     static DmaStreamHandle<dma2s6config, uint16_t> dma2s6_m3; //TIM1_CH3
     static DmaStreamHandle<dma2s4config, uint16_t> dma2s4_m4; //TIM1_CH4
+    static DmaStreamHandle<dma1s5config, uint8_t> dma1s5_telemetry_rx; // TELEMETRY_RX
 
     static SpiHandle spi2(PeripheralBaseAddr::SPI2_BASEADDR, &gpioB);
     static UsartHandle uart1(PeripheralBaseAddr::USART1_BASEADDR);
+    static UsartHandle uart2(PeripheralBaseAddr::USART2_BASEADDR);
     
     static Tim1Handle tim1(PeripheralBaseAddr::TIM1_BASEADDR);
 
@@ -209,7 +232,9 @@ int main() {
     static Nvic nvic(PeripheralBaseAddr::NVIC_BASEADDR);
 
     IRQ_Config::uart1 = &uart1;
+    IRQ_Config::uart2 = &uart2;
     IRQ_Config::dma1s3 = &dma1s3_spirx;
+    IRQ_Config::dma1s5 = &dma1s5_telemetry_rx;
     IRQ_Config::dma2s5 = &dma2s5_uartrx;
 
     initClocks(rcc);
@@ -241,9 +266,11 @@ int main() {
     
     TaskHandle_t receiverTaskPtr = getReceiverTaskHandle();
     TaskHandle_t flightControlTaskPtr = getFlightControlTaskHandle();
+    TaskHandle_t telemetryTaskPtr = getTelemetryTaskHandle();
     
     dma1s3_spirx.init(spi2.getDataRegAddr(), flightControlTaskPtr);
     dma1s4_spitx.init(spi2.getDataRegAddr(), nullptr);
+    dma1s5_telemetry_rx.init(uart2.getDataRegAddr(), telemetryTaskPtr);
     dma2s5_uartrx.init(uart1.getDataRegAddr(), receiverTaskPtr);
     dma2s1_m1.init(tim1.getCh1Address(), nullptr);
     dma2s2_m2.init(tim1.getCh2Address(), nullptr);
@@ -252,6 +279,18 @@ int main() {
     
     spi2.init(GPIOB_PINS::SPI2_SCS);
     uart1.init();
+
+    uart2.init();
+    uart2.enableIdleLineInterrupt();
+
+    uart2.setDmaFunc([]() {
+        return dma1s5_telemetry_rx.checkBuffer();
+    }); // Passing lambda which executes DmaStream method to avoid passing complicated template object to another class
+
+    uart2.setDmaResetFunc([]() {
+        dma1s5_telemetry_rx.disableStream();
+        dma1s5_telemetry_rx.enableStream();
+    });
 
     initIRQs(nvic);
     

@@ -39,9 +39,45 @@ volatile uint32_t* UsartHandle::getDataRegAddr() {
     return &m_USART->DR;
 }
 
+void UsartHandle::enableIdleLineInterrupt() {
+    m_USART->CR1 &= ~USART_SETUP::CR1_UE;
+
+    for (int i = 0; i < 10; ++i) {
+        // Wait for usart peripheral to disable
+    }
+
+    m_USART->CR1 |= USART_SETUP::CR1_IDLEIE;
+
+    m_USART->CR1 |= USART_SETUP::CR1_UE;
+}
+
+void UsartHandle::setDmaFunc(DmaFunc func) {
+    dmaIsWholePackageReceived = func;
+}
+
+void UsartHandle::setDmaResetFunc(DmaResetFunc func) {
+    dmaResetStream = func;
+}
+
 void UsartHandle::handleIRQ() {
-    [[maybe_unused]]uint32_t dummySR = m_USART->SR;
-    [[maybe_unused]]uint32_t dummyDR = m_USART->DR;
+    using namespace USART_SETUP;
+    [[maybe_unused]]uint32_t srReg = m_USART->SR;
+
+    if ((srReg & SR_ORE) && (m_USART->CR3 & CR3_EIE)) {
+        [[maybe_unused]]uint32_t dummyDR = m_USART->DR;
+    }
+
+    /*
+        this is only needed to ensure synchronization between stm and esc
+
+        if there is no synchronization this irq will reset dma stream between telemetry packages from esc
+    */
+    if ((srReg & SR_IDLE) && (m_USART->CR1 & CR1_IDLEIE)) {
+        if (!dmaIsWholePackageReceived()) {
+            dmaResetStream();
+        }
+        // else dma irq will handle passing adress to task and no action is needed
+    }
 
     return;
 }

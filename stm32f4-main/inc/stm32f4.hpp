@@ -11,6 +11,7 @@ namespace PeripheralBaseAddr {
     constexpr uint32_t RCC_BASEADDR = 0x40023800U;
     constexpr uint32_t SPI2_BASEADDR = 0x40003800U;
     constexpr uint32_t USART1_BASEADDR = 0x40011000U;
+    constexpr uint32_t USART2_BASEADDR = 0x40004400U;
     constexpr uint32_t DMA2_BASEADDR = 0x40026400U;
     constexpr uint32_t DMA1_BASEADDR = 0x40026000U;
     constexpr uint32_t CRC_BASEADDR = 0x40023000U;
@@ -24,6 +25,9 @@ namespace NVIC_IRQs {
     constexpr uint32_t DMA1_Stream4_IRQ = 15U;
     constexpr uint8_t DMA1_Stream4_IRQ_Priority = 6U;
 
+    constexpr uint32_t DMA1_Stream5_IRQ = 16U; // VERIFY
+    constexpr uint8_t DMA1_Stream5_IRQ_Priority = 6U;
+
     constexpr uint32_t DMA2_Stream5_IRQ = 68U;
     constexpr uint8_t DMA2_Stream5_IRQ_Priority = 6U;
 
@@ -32,8 +36,9 @@ namespace NVIC_IRQs {
 
     constexpr uint32_t USART1_IRQ = 37U;
     constexpr uint32_t USART1_IRQ_Priority = 5U;
-
-    constexpr std::size_t MAX_REGISTERED_IRQs = 8U;
+    
+    constexpr uint32_t USART2_IRQ = 38U;
+    constexpr uint32_t USART2_IRQ_Priority = 5U;
 }
 
 namespace AHB1_PERIPHERAL_BITS {
@@ -47,6 +52,7 @@ namespace AHB1_PERIPHERAL_BITS {
 
 namespace APB1_PERIPHERAL_BITS {
     constexpr uint32_t SPI2EN = 14U;
+    constexpr uint32_t USART2EN = 17U;
 }
 
 namespace APB2_PERIPHERAL_BITS {
@@ -59,6 +65,7 @@ namespace GPIOA_PINS {
     constexpr uint32_t T1_CH2 = 9U;
     constexpr uint32_t T1_CH3 = 10U;
     constexpr uint32_t T1_CH4 = 11U;
+    constexpr uint32_t USART2_RX = 3U;
 }
 
 namespace GPIOB_PINS {
