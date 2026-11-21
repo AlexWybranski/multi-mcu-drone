@@ -62,9 +62,10 @@ void UsartHandle::setDmaResetFunc(DmaResetFunc func) {
 void UsartHandle::handleIRQ() {
     using namespace USART_SETUP;
     [[maybe_unused]]uint32_t srReg = m_USART->SR;
+    [[maybe_unused]]uint32_t dummyDR = m_USART->DR;
 
     if ((srReg & SR_ORE) && (m_USART->CR3 & CR3_EIE)) {
-        [[maybe_unused]]uint32_t dummyDR = m_USART->DR;
+        dmaResetStream();
     }
 
     /*
