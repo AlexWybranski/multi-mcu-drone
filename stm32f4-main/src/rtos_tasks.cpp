@@ -20,7 +20,8 @@ namespace {
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
-// DEBUG
+// DEBUG VARIABLES
+//NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 uint16_t duty_m1{}, duty_m2{}, duty_m3{}, duty_m4{};
 uint16_t debug_engineArm{};
 uint16_t debug_throttle{};
@@ -28,6 +29,7 @@ int16_t debug_pitch{};
 int16_t debug_roll{};
 uint8_t debug_buttonReg{};
 uint16_t debug_batteryLevel{};
+//NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 TaskHandle_t getReceiverTaskHandle() {
     return receiverTaskHandle;
@@ -50,6 +52,7 @@ TaskHandle_t getTelemetryTaskHandle() {
 namespace {
     std::atomic<uint32_t> rawPacket{0U};
     std::atomic<bool> g_hasLanded{false};
+    std::atomic<bool> g_packetUpdated{false};
 }
 //NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
@@ -139,6 +142,7 @@ void receiverTask(void* pvParameters) {
 
                 //update global control packet
                 rawPacket.store(std::bit_cast<uint32_t>(receivedPacket.controlData));
+                g_packetUpdated.store(true);
                 
             } else {
                 badPacketsCounter++;
@@ -181,6 +185,7 @@ void flightControlTask(void* pvParameters) {
 
     bool engineArmed = false;
     bool hasLanded = false;
+    bool packetUpdated = false;
 
     if(!initImu(spi)) {
         return;
@@ -206,12 +211,17 @@ void flightControlTask(void* pvParameters) {
             std::memcpy(imuData.data(), std::bit_cast<uint8_t*>(dataAddress), LSM6DS3::SENSOR_DATA_READ_SEQUENCE_LENGTH);
         taskEXIT_CRITICAL();
 
-        packet = std::bit_cast<DroneControlData>(rawPacket.load());
+        packetUpdated = g_packetUpdated.load();
 
-        debug_throttle = packet.throttle;
-        debug_roll = packet.roll;
-        debug_pitch = packet.pitch;
-        debug_buttonReg = packet.buttonControlReg;
+        if (packetUpdated) {
+            g_packetUpdated.store(false);
+
+            packet = std::bit_cast<DroneControlData>(rawPacket.load());
+            debug_throttle = packet.throttle;
+            debug_roll = packet.roll;
+            debug_pitch = packet.pitch;
+            debug_buttonReg = packet.buttonControlReg;
+        }
 
         std::memcpy(&imuDataRaw, imuDataStartPtr, sizeof(ImuTelemetry));
 
@@ -230,10 +240,10 @@ void flightControlTask(void* pvParameters) {
 
         MotorMixer::mixMotors(packet, pid.pidOutput, motors);
 
-        if ((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) && engineArmed == false) {
+        if ((packet.buttonControlReg & ControlRegister::ENGINE_ARM) && engineArmed == false) {
             engineArmed = true;
             pid.resetIntegrals();
-        } else if (((packet.buttonControlReg & ControlRegister::START_STOP_ENGINE) /*&& hasLanded*/) && engineArmed) {
+        } else if (((packet.buttonControlReg & ControlRegister::ENGINE_ARM) == false) /*&& hasLanded*/ && engineArmed) {
             engineArmed = false;
             pid.resetIntegrals();
         } else if (((packet.buttonControlReg & ControlRegister::NO_PAD) && hasLanded) && engineArmed) {
@@ -310,6 +320,8 @@ void failsafeTask(void* pvParameters) {
 void telemetryTask(void *pvParameters) {
     static_cast<void>(pvParameters);
 
+    constexpr uint16_t BATTERY_LOW_THRESHOLD = 1450U;
+
     KissTelemetry escTelemetry{};
     uint32_t rawDataAddress{};
     uint8_t* rawDataPtr{};
@@ -331,7 +343,7 @@ void telemetryTask(void *pvParameters) {
             batteryLevel = static_cast<uint16_t>((escTelemetry.voltage_h << 8U) | (escTelemetry.voltage_l << 0U));
             debug_batteryLevel = batteryLevel;
 
-            if (batteryLevel < 1450) {
+            if (batteryLevel < BATTERY_LOW_THRESHOLD) {
                 xTaskNotifyGive(failsafeTaskHandle);
             }
         }

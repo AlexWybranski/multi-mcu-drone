@@ -41,9 +41,9 @@ volatile uint32_t* UsartHandle::getDataRegAddr() {
 
 void UsartHandle::enableIdleLineInterrupt() {
     m_USART->CR1 &= ~USART_SETUP::CR1_UE;
-
-    for (int i = 0; i < 10; ++i) {
-        // Wait for usart peripheral to disable
+ 
+    for (uint32_t i = 0U; i < 10U; ++i) { //NOLINT(cppcoreguidelines-avoid-magic-numbers)
+        // Wait 10 ticks for usart peripheral to disable
     }
 
     m_USART->CR1 |= USART_SETUP::CR1_IDLEIE;
@@ -62,9 +62,10 @@ void UsartHandle::setDmaResetFunc(DmaResetFunc func) {
 void UsartHandle::handleIRQ() {
     using namespace USART_SETUP;
     [[maybe_unused]]uint32_t srReg = m_USART->SR;
+    [[maybe_unused]]uint32_t dummyDR = m_USART->DR;
 
     if ((srReg & SR_ORE) && (m_USART->CR3 & CR3_EIE)) {
-        [[maybe_unused]]uint32_t dummyDR = m_USART->DR;
+        dmaResetStream();
     }
 
     /*

@@ -28,13 +28,13 @@ void MotorMixer::mixMotors(const DroneControlData& data, const PidOutput& input,
     motors.motorLefFro = clamp(motors.motorLefFro);
     motors.motorRigRea = clamp(motors.motorRigRea);
 
-    motor1 = motors.motorRigRea;
-    motor2 = motors.motorRigFro;
-    motor3 = motors.motorLefRea;
-    motor4 = motors.motorLefFro;
+    motor1 = motors.motorRigFro;
+    motor2 = motors.motorLefFro;
+    motor3 = motors.motorRigRea;
+    motor4 = motors.motorLefRea;
 
-    motorsOut.motor_1 = static_cast<uint16_t>(motors.motorRigRea);
-    motorsOut.motor_2 = static_cast<uint16_t>(motors.motorRigFro);
-    motorsOut.motor_3 = static_cast<uint16_t>(motors.motorLefRea);
-    motorsOut.motor_4 = static_cast<uint16_t>(motors.motorLefFro);
+    motorsOut.motor_1 = static_cast<uint16_t>(motors.motorRigFro);
+    motorsOut.motor_2 = static_cast<uint16_t>(motors.motorLefFro);
+    motorsOut.motor_3 = static_cast<uint16_t>(motors.motorRigRea);
+    motorsOut.motor_4 = static_cast<uint16_t>(motors.motorLefRea);
 }
