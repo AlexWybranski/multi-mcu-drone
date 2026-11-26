@@ -41,7 +41,7 @@ namespace ConstantValues {
 
     constexpr uint32_t N_CRC_CALC_VALUE = 0x0U;
 
-    constexpr uint8_t RST_BUTTONS = ~(ControlRegister::CAM_DOWN | ControlRegister::CAM_UP | ControlRegister::YAW_LEFT | ControlRegister::YAW_RIGHT | ControlRegister::START_STOP_ENGINE);
+    constexpr uint8_t RST_BUTTONS = ~(ControlRegister::CAM_DOWN | ControlRegister::CAM_UP | ControlRegister::YAW_LEFT | ControlRegister::YAW_RIGHT | ControlRegister::ENGINE_ARM);
 
     constexpr gpio_num_t RF_SWITCH = GPIO_NUM_3;
     constexpr gpio_num_t ANT_CONFIG = GPIO_NUM_14;
@@ -55,7 +55,7 @@ namespace ConstantValues {
     constexpr uint16_t MIN_BATTERY_LEVEL = 3400U;
     constexpr uint32_t BAT_LOW_LED_FREQ = 1000U;
 
-    constexpr uint8_t IGNORE_ARMING_COUNTER_LIMIT = 100U;
+    constexpr uint8_t IGNORE_ARMING_COUNTER_LIMIT = 20U;
 };
 
 namespace ButtonMasks {
@@ -91,8 +91,7 @@ class RemoteControl {
         static inline DroneControlPacket m_currentPacket;
         static inline DroneControlPacket m_sharedPacket;
         static inline uint8_t m_prevButtonReg{};
-        static inline bool m_reactToArm{true};
-        static inline uint8_t m_ignoreArmingCounter{};
+        static inline uint8_t m_reactTo_A_ButtonCounter{};
         static inline std::mutex m_packetMutex;
         
         static inline esp_now_peer_info_t m_peer;

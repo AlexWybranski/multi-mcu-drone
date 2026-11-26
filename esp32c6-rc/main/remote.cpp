@@ -38,19 +38,6 @@ DroneControlPacket RemoteControl::getAndClearPacket() {
         m_sharedPacket.crcValue = 0U;
     }
 
-    if ((m_prevButtonReg & ControlRegister::START_STOP_ENGINE) && (packet.controlData.buttonControlReg & ControlRegister::START_STOP_ENGINE)) {
-        m_reactToArm = false;
-    }
-    if (!m_reactToArm) {
-        packet.controlData.buttonControlReg &= ~ControlRegister::START_STOP_ENGINE;
-        m_ignoreArmingCounter++;
-    }
-    if (m_ignoreArmingCounter > IGNORE_ARMING_COUNTER_LIMIT) {
-        m_reactToArm = true;
-        m_ignoreArmingCounter = 0U;
-    }
-    m_prevButtonReg = packet.controlData.buttonControlReg;
-
     return packet;
 }
 
@@ -177,6 +164,7 @@ void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_
     m_currentPacket.controlData.throttle = scaleThrottleValue(ay);
     m_currentPacket.controlData.roll = scaleAxisValue(arx);
     m_currentPacket.controlData.pitch = scaleAxisValue(ary);
+    m_currentPacket.controlData.buttonControlReg = m_prevButtonReg;
         
     if (buttons & BUTTON_SHOULDER_L) {
         m_currentPacket.controlData.buttonControlReg |= ControlRegister::YAW_LEFT;
@@ -191,9 +179,19 @@ void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_
     }
 
     if (buttons & BUTTON_A) {
-        m_currentPacket.controlData.buttonControlReg |= ControlRegister::START_STOP_ENGINE;
+        if (m_reactTo_A_ButtonCounter == 0) {
+            m_currentPacket.controlData.buttonControlReg ^= ControlRegister::ENGINE_ARM;
+            m_reactTo_A_ButtonCounter++;
+        }
     } else if ((dpad & BUTTON_A) == 0) {
-        m_currentPacket.controlData.buttonControlReg &= ~ControlRegister::START_STOP_ENGINE;
+
+    }
+
+    if (m_reactTo_A_ButtonCounter != 0) {
+        m_reactTo_A_ButtonCounter++;
+    }
+    if (m_reactTo_A_ButtonCounter >= ConstantValues::IGNORE_ARMING_COUNTER_LIMIT) {
+        m_reactTo_A_ButtonCounter = 0;
     }
 
     if(dpad & DPAD_UP) {
@@ -207,6 +205,8 @@ void RemoteControl::handlePadData(int32_t axis_y, int32_t axis_rx, int32_t axis_
     } else if ((dpad & DPAD_DOWN) == 0) {
         m_currentPacket.controlData.buttonControlReg &= ~ControlRegister::CAM_DOWN;
     }
+
+    m_prevButtonReg = m_currentPacket.controlData.buttonControlReg;
 
     {
         std::lock_guard scoped_lock(RemoteControl::m_packetMutex);
