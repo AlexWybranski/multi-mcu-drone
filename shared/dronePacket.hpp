@@ -7,7 +7,7 @@ namespace ControlRegister {
     constexpr uint8_t YAW_RIGHT = (0b1U << 1U);
     constexpr uint8_t CAM_UP = (0b1U << 2U);
     constexpr uint8_t CAM_DOWN = (0b1U << 3U);
-    constexpr uint8_t START_STOP_ENGINE = (0b1U << 4U);
+    constexpr uint8_t ENGINE_ARM = (0b1U << 4U);
     constexpr uint8_t NO_PAD = (0b1U << 5U);
 }
 

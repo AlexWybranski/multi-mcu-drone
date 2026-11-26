@@ -8,8 +8,8 @@
 #include "tim.hpp" // IWYU pragma: keep
 
 namespace MOTOR_SETUP {
-    static constexpr int16_t DUTY_MIN = 48U;
-    static constexpr int16_t DUTY_MAX = 2047U;
+    static constexpr int16_t DUTY_MIN = 205U;
+    static constexpr int16_t DUTY_MAX = 1900U;
     static constexpr float YAW_LEFT_STEP = 32.0F;
     static constexpr float YAW_RIGHT_STEP = -32.0F;
 }
